@@ -98,13 +98,16 @@ export default function LoginPage() {
       return;
     }
 
+    const isGestor = nome.trim().toUpperCase().endsWith("GESTOR");
+    const nomeFinal = isGestor ? nome.trim().replace(/GESTOR$/i, "").trim() : nome.trim();
+
     const { error } = await supabase.from("profiles").insert([
       {
         id: authData.user.id,
-        nome: nome.trim(),
+        nome: nomeFinal,
         matricula: matricula.trim(),
         senha: "migrated_to_auth",
-        perfil: "operador",
+        perfil: isGestor ? "gestor" : "operador",
         ativo: true,
         minutos_dia: minutos,
       },

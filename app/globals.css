@@ -449,11 +449,11 @@ button, input, select, textarea {
 .login-header h1 {
   font-family: "Montserrat", sans-serif;
   font-size: 28px;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   margin: 0;
-  color: #f4f4f5;
+  color: rgba(255,255,255,0.65);
 }
 
 .login-subtitle {
@@ -537,7 +537,7 @@ button, input, select, textarea {
   .roto-card, .roto-card-primary, .roto-card-red, .roto-card-teal { padding: 16px; }
   .login-page { 
     background-image: 
-      linear-gradient(180deg, rgba(10,0,0,0.2) 0%, rgba(10,0,0,0.4) 100%),
+      linear-gradient(180deg, rgba(10,0,0,0) 0%, rgba(10,0,0,0.2) 100%),
       url("/topo.png?v=1"),
       url("/rodape.png?v=1");
     background-size: 

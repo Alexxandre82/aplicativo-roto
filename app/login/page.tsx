@@ -120,7 +120,6 @@ export default function LoginPage() {
     <main className="login-page">
       <div className="login-card">
         <div className="login-header">
-          <p className="login-brand">ROTO FERMAX CD</p>
           <h1>{modoCadastro ? "Criar cadastro" : "Acesso ao Sistema"}</h1>
           <p className="login-subtitle">
             {modoCadastro

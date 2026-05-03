@@ -535,5 +535,6 @@ button, input, select, textarea {
   .roto-header-user { gap: 6px; }
   .roto-header-name { max-width: 80px; font-size: 12px; }
   .roto-card, .roto-card-primary, .roto-card-red, .roto-card-teal { padding: 16px; }
+  .login-page { background-size: 100% 100%; background-position: center; }
   .login-card { padding: 26px 20px; border-radius: 14px; }
 }

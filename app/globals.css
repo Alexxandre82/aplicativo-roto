@@ -104,7 +104,7 @@ button, input, select, textarea {
    HEADER BAR (navy)
 ─────────────────────────────────────────────── */
 .roto-header {
-  background: var(--sidebar);
+  background: var(--roto-red);
   padding: 0 20px;
   height: 56px;
   display: flex;
@@ -113,7 +113,7 @@ button, input, select, textarea {
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  box-shadow: 0 2px 12px rgba(160,0,0,0.35);
 }
 
 .roto-header-logo {
@@ -122,25 +122,25 @@ button, input, select, textarea {
   gap: 10px;
 }
 
-.roto-header-logo-badge {
-  background: var(--roto-red);
-  color: #fff;
-  font-family: "Montserrat", sans-serif;
-  font-weight: 900;
-  font-size: 13px;
-  letter-spacing: 0.12em;
-  padding: 4px 10px;
+.roto-header-logo {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+  background: #fff;
   border-radius: 4px;
-  text-transform: uppercase;
+  padding: 3px 8px;
 }
 
 .roto-header-title {
-  color: rgba(255,255,255,0.7);
+  color: rgba(255,255,255,0.85);
   font-family: "Inter", sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+  border-left: 1px solid rgba(255,255,255,0.3);
+  padding-left: 10px;
+  margin-left: 2px;
 }
 
 .roto-header-user {
@@ -397,32 +397,32 @@ button, input, select, textarea {
    LOGIN (mantido)
 ─────────────────────────────────────────────── */
 .login-page {
-  min-height: 100vh;
+  min-height: 100dvh;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  background-color: #0d0d0d;
+  padding: 20px 16px;
+  background-color: #1a0a0a;
   background-image:
-    linear-gradient(rgba(5,5,6,0.58), rgba(5,5,6,0.88)),
+    linear-gradient(180deg, rgba(10,0,0,0.45) 0%, rgba(10,0,0,0.65) 100%),
     url("/fundo app.png");
   background-size: cover;
   background-repeat: no-repeat;
-  background-position: center top;
+  background-position: center center;
 }
 
 .login-card {
   width: 100%;
-  max-width: 420px;
-  background: rgba(10,10,10,0.86);
+  max-width: 400px;
+  background: rgba(10,5,5,0.88);
   border: 1px solid rgba(255,255,255,0.1);
-  border-top: 4px solid var(--primary);
-  border-radius: 18px;
-  padding: 32px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 24px 70px rgba(0,0,0,0.65);
+  border-top: 4px solid var(--roto-red);
+  border-radius: 16px;
+  padding: 28px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 24px 70px rgba(0,0,0,0.55);
 }
 
 .login-header { text-align: center; margin-bottom: 28px; }

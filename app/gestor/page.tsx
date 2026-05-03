@@ -176,14 +176,18 @@ export default function GestorPage() {
 
       {/* ── Header ── */}
       <header className="roto-header">
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span className="roto-header-logo-badge">ROTO</span>
-          <span className="roto-header-title">CD Fermax · Gestão</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <img
+            src="/logo.png"
+            alt="Roto Fermax"
+            style={{ height: 36, width: "auto", objectFit: "contain", background: "#fff", borderRadius: 4, padding: "3px 8px" }}
+          />
+          <span className="roto-header-title">Gestão</span>
         </div>
         <button
           onClick={() => { localStorage.removeItem("user"); router.replace("/login"); }}
           className="roto-button-secondary"
-          style={{ padding: "6px 14px", fontSize: 12 }}
+          style={{ padding: "6px 14px", fontSize: 12, borderColor: "rgba(255,255,255,0.4)", color: "#fff", background: "rgba(255,255,255,0.15)" }}
         >
           Sair
         </button>

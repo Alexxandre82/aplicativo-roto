@@ -30,20 +30,18 @@
 }
 
 html {
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%;
 }
 
 body {
-  height: 100%;
   margin: 0;
   padding: 0;
+  min-height: 100%;
   background: var(--bg);
   color: var(--text);
   font-family: "Inter", system-ui, sans-serif;
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
-  overflow: hidden;
 }
 
 button,
@@ -57,10 +55,7 @@ select {
 ========================= */
 
 .roto-page {
-  height: 100dvh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
+  min-height: 100dvh;
   background:
     radial-gradient(circle at top left, rgba(204, 0, 0, 0.18), transparent 32%),
     linear-gradient(180deg, #111113 0%, #09090b 100%);

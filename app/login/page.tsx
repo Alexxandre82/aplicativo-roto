@@ -120,22 +120,7 @@ export default function LoginPage() {
     <main className="login-page">
       <div className="login-card">
         <div className="login-header">
-          {/* Logo */}
-          <div style={{ marginBottom: 16 }}>
-            <img
-              src="/logo.png"
-              alt="Roto Fermax"
-              style={{
-                height: 48,
-                width: "auto",
-                objectFit: "contain",
-                background: "#fff",
-                borderRadius: 6,
-                padding: "6px 12px",
-                boxShadow: "0 2px 12px rgba(0,0,0,0.25)",
-              }}
-            />
-          </div>
+          <p className="login-brand">ROTO FERMAX CD</p>
           <h1>{modoCadastro ? "Criar cadastro" : "Acesso ao Sistema"}</h1>
           <p className="login-subtitle">
             {modoCadastro

@@ -77,11 +77,15 @@ function KpiCard({ label, value, sub, color, icon }: {
       borderTop: `3px solid ${color}`,
       borderRadius: "var(--radius-md)",
       padding: "18px 20px",
-      boxShadow: "var(--shadow-sm)",
+      boxShadow: "var(--shadow-md)",
       display: "flex",
       flexDirection: "column",
       gap: 4,
-    }}>
+      transition: "box-shadow 0.2s, transform 0.2s",
+    }}
+    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "var(--shadow-lg)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(-2px)"; }}
+    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "var(--shadow-md)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)"; }}
+    >
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
         <span style={{ fontSize: 20 }}>{icon}</span>
         <p className="roto-label">{label}</p>
@@ -276,7 +280,7 @@ export default function GestorPage() {
             </div>
 
             {/* Barra de progresso */}
-            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "16px 20px", marginBottom: 24, boxShadow: "var(--shadow-sm)" }}>
+            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "16px 20px", marginBottom: 24, boxShadow: "var(--shadow-md)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <span className="roto-label">Ocupação do tempo disponível</span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: pctColor }}>{pct}%</span>
@@ -309,7 +313,7 @@ export default function GestorPage() {
 
               {/* Pizza */}
               {atividades.length > 0 && (
-                <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 20, boxShadow: "var(--shadow-sm)" }}>
+                <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 20, boxShadow: "var(--shadow-md)" }}>
                   <p className="roto-label" style={{ marginBottom: 16 }}>Proporção por atividade</p>
                   <div style={{ width: "100%", height: 240 }}>
                     <ResponsiveContainer>
@@ -335,7 +339,7 @@ export default function GestorPage() {
 
               {/* Barra horizontal */}
               {atividades.length > 0 && (
-                <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 20, boxShadow: "var(--shadow-sm)" }}>
+                <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 20, boxShadow: "var(--shadow-md)" }}>
                   <p className="roto-label" style={{ marginBottom: 16 }}>Minutos por atividade</p>
                   <div style={{ width: "100%", height: Math.max(220, atividades.length * 44) }}>
                     <ResponsiveContainer>
@@ -351,7 +355,7 @@ export default function GestorPage() {
               )}
 
               {/* Tendência total */}
-              <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 20, boxShadow: "var(--shadow-sm)" }}>
+              <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 20, boxShadow: "var(--shadow-md)" }}>
                 <p className="roto-label" style={{ marginBottom: 16 }}>Tendência total — 7 dias</p>
                 <div style={{ width: "100%", height: 240 }}>
                   <ResponsiveContainer>
@@ -370,7 +374,7 @@ export default function GestorPage() {
 
               {/* Evolução por atividade */}
               {ativsUnicas.length > 0 && (
-                <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 20, boxShadow: "var(--shadow-sm)" }}>
+                <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 20, boxShadow: "var(--shadow-md)" }}>
                   <p className="roto-label" style={{ marginBottom: 16 }}>Evolução por atividade — 7 dias</p>
                   <div style={{ width: "100%", height: 240 }}>
                     <ResponsiveContainer>

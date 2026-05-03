@@ -37,8 +37,10 @@ function getIntervalo(periodo: Periodo, dataBase: string) {
 }
 
 function formatMin(min: number) {
+  if (min < 60) return `${min} min`;
   const h = Math.floor(min/60), m = min%60;
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}:${m.toString().padStart(2, "0")}hr`;
 }
 
 function exportarCSV(logs: any[], nome: string) {

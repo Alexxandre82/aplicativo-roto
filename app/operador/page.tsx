@@ -310,6 +310,14 @@ export default function OperadorPage() {
     return new Date(data).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   }
 
+  function formatarMinutosExibicao(min: number) {
+    if (min < 60) return `${min} min`;
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    if (m === 0) return `${h}h`;
+    return `${h}:${m.toString().padStart(2, "0")}hr`;
+  }
+
   // ─── Render: Fallback Erro ────────────────────────────────────────────────
   if (erroConexao) {
     return (
@@ -658,7 +666,7 @@ export default function OperadorPage() {
                             </p>
                           </div>
                           <span className="roto-badge roto-badge-primary" style={{ flexShrink: 0 }}>
-                            {item.duration_minutes} min
+                            {formatarMinutosExibicao(item.duration_minutes)}
                           </span>
                         </div>
 

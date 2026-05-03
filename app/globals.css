@@ -537,13 +537,13 @@ button, input, select, textarea {
   .roto-card, .roto-card-primary, .roto-card-red, .roto-card-teal { padding: 16px; }
   .login-page { 
     background-image: 
-      linear-gradient(180deg, rgba(10,0,0,0.6) 0%, rgba(10,0,0,0.85) 100%),
-      url("/topo.png"),
-      url("/rodape.png");
+      linear-gradient(180deg, rgba(10,0,0,0.5) 0%, rgba(10,0,0,0.7) 100%),
+      url("/topo.png?v=1"),
+      url("/rodape.png?v=1");
     background-size: 
       100% 100%,
-      100% auto,
-      100% auto;
+      100% 50%, /* Força a ocupar a metade superior inteira */
+      100% 50%; /* Força a ocupar a metade inferior inteira */
     background-position: 
       center,
       top center,

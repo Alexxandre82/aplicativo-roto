@@ -299,8 +299,18 @@ export default function OperadorPage() {
               />
 
               {dropdownAberto && (
-                <div className="absolute z-50 w-full mt-1 overflow-hidden shadow-xl"
-                  style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius:"4px", boxShadow:"0 4px 16px rgba(0,0,0,0.12)" }}>
+                <div
+                  className="absolute z-50 w-full mt-1 shadow-xl"
+                  style={{
+                    background: "var(--bg-card)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "4px",
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+                    maxHeight: "55dvh",
+                    overflowY: "auto",
+                    WebkitOverflowScrolling: "touch",
+                  }}
+                >
                   {atividadesFiltradas.length === 0 ? (
                     <p className="px-4 py-3 text-sm roto-muted">Nenhuma atividade encontrada.</p>
                   ) : (

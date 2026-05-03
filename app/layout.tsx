@@ -1,9 +1,28 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+import { PwaRegistry } from "./PwaRegistry";
+
 export const metadata: Metadata = {
   title: "ROTO — Funções Invisíveis",
   description: "Sistema de registro de trabalhos invisíveis — ROTO Fermax CD",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Roto CD",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport = {
+  themeColor: "#1a0a0a",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
@@ -21,7 +40,10 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <PwaRegistry />
+        {children}
+      </body>
     </html>
   );
 }

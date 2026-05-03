@@ -1,0 +1,24 @@
+{
+  "name": "Roto CD Operações",
+  "short_name": "Roto CD",
+  "description": "Aplicativo de registro de atividades Roto Fermax",
+  "start_url": "/login",
+  "display": "standalone",
+  "background_color": "#1a0a0a",
+  "theme_color": "#1a0a0a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

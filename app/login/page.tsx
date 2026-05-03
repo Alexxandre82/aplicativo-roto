@@ -8,7 +8,7 @@ export default function LoginPage() {
   const [matricula, setMatricula] = useState("");
   const [senha, setSenha] = useState("");
   const [nome, setNome] = useState("");
-  const [cargaHoraria, setCargaHoraria] = useState("501");
+  const [cargaHoraria, setCargaHoraria] = useState("08:21");
   const [modoCadastro, setModoCadastro] = useState(false);
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
@@ -70,9 +70,11 @@ export default function LoginPage() {
       return;
     }
 
-    const minutos = parseInt(cargaHoraria);
-    if (!minutos || minutos < 60 || minutos > 720) {
-      setErro("Carga horária inválida (entre 60 e 720 minutos).");
+    const [hh, mm] = cargaHoraria.split(":").map(Number);
+    const minutos = (hh || 0) * 60 + (mm || 0);
+    
+    if (!minutos || minutos < 60) {
+      setErro("Carga horária inválida (mínimo de 1 hora).");
       setLoading(false);
       return;
     }
@@ -113,17 +115,7 @@ export default function LoginPage() {
     setNome("");
     setMatricula("");
     setSenha("");
-    setCargaHoraria("501");
-  }
-
-  function formatarMinutos(minStr: string) {
-    const min = Number(minStr);
-    if (!min || min < 1) return "";
-    if (min < 60) return `${min} min`;
-    const h = Math.floor(min / 60);
-    const m = min % 60;
-    if (m === 0) return `${h}hr`;
-    return `${h}:${m.toString().padStart(2, "0")}`;
+    setCargaHoraria("08:21");
   }
 
   return (
@@ -152,16 +144,11 @@ export default function LoginPage() {
                   Carga horária diária
                 </label>
                 <input
-                  type="number"
-                  placeholder="Ex: 501"
+                  type="time"
                   value={cargaHoraria}
-                  min="60"
-                  max="720"
                   onChange={(e) => setCargaHoraria(e.target.value)}
+                  style={{ cursor: "text" }}
                 />
-                <p className="login-hint-small" style={{ color: "rgba(255,255,255,0.85)", fontSize: 11, marginTop: 6 }}>
-                  Turno completo = 501 min <span style={{ color: "var(--primary-light)", fontWeight: 600, marginLeft: 4 }}>({formatarMinutos(cargaHoraria)})</span>
-                </p>
               </div>
             </>
           )}

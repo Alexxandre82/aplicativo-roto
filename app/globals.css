@@ -543,7 +543,7 @@ button, input, select, textarea {
     background-size: 
       100% 100%,
       100% 50%, /* Força a ocupar a metade superior inteira */
-      100% 50%; /* Força a ocupar a metade inferior inteira */
+      100% 35%; /* Ocupa 35% inferior para ficar abaixo do botão */
     background-position: 
       center,
       top center,

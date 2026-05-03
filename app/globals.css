@@ -153,6 +153,10 @@ button, input, select, textarea {
   color: #fff;
   font-size: 13px;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
 }
 
 /* ──────────────────────────────────────────────
@@ -525,7 +529,11 @@ button, input, select, textarea {
    MOBILE
 ─────────────────────────────────────────────── */
 @media (max-width: 480px) {
-  .roto-header { height: 52px; padding: 0 14px; }
+  .roto-header { height: 52px; padding: 0 10px; }
+  .roto-header-logo { height: 26px; padding: 2px 4px; }
+  .roto-header-title { padding-left: 6px; margin-left: 0; font-size: 10px; }
+  .roto-header-user { gap: 6px; }
+  .roto-header-name { max-width: 80px; font-size: 12px; }
   .roto-card, .roto-card-primary, .roto-card-red, .roto-card-teal { padding: 16px; }
   .login-card { padding: 26px 20px; border-radius: 14px; }
 }

@@ -18,7 +18,7 @@ function RotoLogo() {
     <img
       src="/logo.png"
       alt="Roto Fermax"
-      style={{ height: 36, width: "auto", objectFit: "contain", background: "#fff", borderRadius: 4, padding: "3px 8px" }}
+      className="roto-header-logo"
     />
   );
 }

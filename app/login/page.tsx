@@ -23,15 +23,17 @@ export default function LoginPage() {
       return;
     }
 
-    // Usando Supabase Auth nativo
+    // Usando Supabase Auth nativo (adicionamos sufixo para burlar o limite mínimo de 6 chars do Supabase)
     const emailFake = `${matricula.trim()}@roto.com`;
+    const senhaSegura = `${senha.trim()}-roto`;
+    
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: emailFake,
-      password: senha.trim(),
+      password: senhaSegura,
     });
 
     if (authError || !authData.user) {
-      setErro("Matrícula ou senha inválida.");
+      setErro("Matrícula ou senha inválida. " + (authError?.message || ""));
       setLoading(false);
       return;
     }
@@ -84,13 +86,14 @@ export default function LoginPage() {
       return;
     }
 
+    const senhaSegura = `${senha.trim()}-roto`;
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: `${matricula.trim()}@roto.com`,
-      password: senha.trim(),
+      password: senhaSegura,
     });
 
     if (authError || !authData.user) {
-      setErro("Matrícula já em uso ou erro no servidor.");
+      setErro("Erro: " + (authError?.message || "Matrícula já em uso."));
       setLoading(false);
       return;
     }

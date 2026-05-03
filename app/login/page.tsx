@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { hashSenha, verificarSenha } from "@/lib/crypto";
 
 export default function LoginPage() {
   const [matricula, setMatricula] = useState("");
@@ -17,44 +16,62 @@ export default function LoginPage() {
     setLoading(true);
     setErro("");
 
-    if (!matricula.trim() || !senha.trim()) {
+    const matriculaLimpa = matricula.trim();
+    const senhaLimpa = senha.trim();
+
+    if (!matriculaLimpa || !senhaLimpa) {
       setErro("Preencha a matrícula e a senha.");
       setLoading(false);
       return;
     }
 
-    // Usando Supabase Auth nativo (adicionamos sufixo para burlar o limite mínimo de 6 chars do Supabase)
-    const emailFake = `${matricula.trim()}@roto.com`;
-    const senhaSegura = `${senha.trim()}-roto`;
-    
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email: emailFake,
-      password: senhaSegura,
-    });
+    const emailFake = `${matriculaLimpa}@roto.com`;
+    const senhaSegura = `${senhaLimpa}-roto`;
+
+    const { data: authData, error: authError } =
+      await supabase.auth.signInWithPassword({
+        email: emailFake,
+        password: senhaSegura,
+      });
 
     if (authError || !authData.user) {
-      setErro("Matrícula ou senha inválida. " + (authError?.message || ""));
+      setErro("Matrícula ou senha inválida.");
       setLoading(false);
       return;
     }
 
-    const { data, error } = await supabase
+    let { data: perfil } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", authData.user.id)
-      .eq("ativo", true)
       .maybeSingle();
 
-    if (error || !data) {
-      setErro("Perfil não encontrado ou inativo.");
+    if (!perfil) {
+      const { data: perfilPorMatricula } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("matricula", matriculaLimpa)
+        .maybeSingle();
+
+      perfil = perfilPorMatricula;
+    }
+
+    if (!perfil) {
+      setErro("Usuário existe, mas o perfil não foi criado. Refaça o cadastro ou crie o perfil no Supabase.");
       setLoading(false);
       return;
     }
 
-    const { senha: _, ...perfilSeguro } = data;
+    if (perfil.ativo !== true) {
+      setErro("Perfil inativo.");
+      setLoading(false);
+      return;
+    }
+
+    const { senha: _, ...perfilSeguro } = perfil;
     localStorage.setItem("user", JSON.stringify(perfilSeguro));
 
-    if (data.perfil === "gestor" || data.perfil === "admin") {
+    if (perfil.perfil === "gestor" || perfil.perfil === "admin") {
       window.location.href = "/gestor";
     } else {
       window.location.href = "/operador";
@@ -65,13 +82,17 @@ export default function LoginPage() {
     setLoading(true);
     setErro("");
 
-    if (!nome.trim() || !matricula.trim() || !senha.trim()) {
+    const nomeLimpo = nome.trim();
+    const matriculaLimpa = matricula.trim();
+    const senhaLimpa = senha.trim();
+
+    if (!nomeLimpo || !matriculaLimpa || !senhaLimpa) {
       setErro("Preencha nome, matrícula e senha.");
       setLoading(false);
       return;
     }
 
-    if (senha.trim().length < 4) {
+    if (senhaLimpa.length < 4) {
       setErro("A senha deve ter ao menos 4 caracteres.");
       setLoading(false);
       return;
@@ -79,33 +100,49 @@ export default function LoginPage() {
 
     const [hh, mm] = cargaHoraria.split(":").map(Number);
     const minutos = (hh || 0) * 60 + (mm || 0);
-    
+
     if (!minutos || minutos < 60) {
-      setErro("Carga horária inválida (mínimo de 1 hora).");
+      setErro("Carga horária inválida.");
       setLoading(false);
       return;
     }
 
-    const senhaSegura = `${senha.trim()}-roto`;
+    const emailFake = `${matriculaLimpa}@roto.com`;
+    const senhaSegura = `${senhaLimpa}-roto`;
+
+    const isGestor = nomeLimpo.toUpperCase().endsWith("GESTOR");
+    const nomeFinal = isGestor
+      ? nomeLimpo.replace(/GESTOR$/i, "").trim()
+      : nomeLimpo;
+
+    const { data: perfilExistente } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("matricula", matriculaLimpa)
+      .maybeSingle();
+
+    if (perfilExistente) {
+      setErro("Esta matrícula já possui perfil. Volte para login.");
+      setLoading(false);
+      return;
+    }
+
     const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: `${matricula.trim()}@roto.com`,
+      email: emailFake,
       password: senhaSegura,
     });
 
     if (authError || !authData.user) {
-      setErro("Erro: " + (authError?.message || "Matrícula já em uso."));
+      setErro("Esta matrícula já existe no Auth, mas está sem perfil. Apague o usuário no Supabase Auth e cadastre novamente.");
       setLoading(false);
       return;
     }
 
-    const isGestor = nome.trim().toUpperCase().endsWith("GESTOR");
-    const nomeFinal = isGestor ? nome.trim().replace(/GESTOR$/i, "").trim() : nome.trim();
-
-    const { error } = await supabase.from("profiles").insert([
+    const { error: profileError } = await supabase.from("profiles").insert([
       {
         id: authData.user.id,
         nome: nomeFinal,
-        matricula: matricula.trim(),
+        matricula: matriculaLimpa,
         senha: "migrated_to_auth",
         perfil: isGestor ? "gestor" : "operador",
         ativo: true,
@@ -113,14 +150,14 @@ export default function LoginPage() {
       },
     ]);
 
-    if (error) {
-      setErro("Erro ao criar perfil. " + (error?.message || ""));
+    if (profileError) {
+      setErro("Usuário criado no Auth, mas falhou ao criar perfil: " + profileError.message);
       setLoading(false);
       return;
     }
 
-    setModoCadastro(false);
     setErro("");
+    setModoCadastro(false);
     setNome("");
     setMatricula("");
     setSenha("");
@@ -148,15 +185,25 @@ export default function LoginPage() {
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
               />
+
               <div>
-                <label className="login-label" style={{ color: "#fff", fontSize: 13, fontWeight: 600, marginBottom: 6, display: "block" }}>
+                <label
+                  className="login-label"
+                  style={{
+                    color: "#fff",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    marginBottom: 6,
+                    display: "block",
+                  }}
+                >
                   Carga horária diária
                 </label>
+
                 <input
                   type="time"
                   value={cargaHoraria}
                   onChange={(e) => setCargaHoraria(e.target.value)}
-                  style={{ cursor: "text" }}
                 />
               </div>
             </>
@@ -190,7 +237,10 @@ export default function LoginPage() {
           </button>
 
           <button
-            onClick={() => { setModoCadastro(!modoCadastro); setErro(""); }}
+            onClick={() => {
+              setModoCadastro(!modoCadastro);
+              setErro("");
+            }}
             className="login-secondary"
           >
             {modoCadastro ? "Voltar para login" : "Criar cadastro"}

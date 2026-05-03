@@ -314,8 +314,8 @@ export default function OperadorPage() {
     if (min < 60) return `${min} min`;
     const h = Math.floor(min / 60);
     const m = min % 60;
-    if (m === 0) return `${h}h`;
-    return `${h}:${m.toString().padStart(2, "0")}hr`;
+    if (m === 0) return `${h}hr`;
+    return `${h}:${m.toString().padStart(2, "0")}`;
   }
 
   // ─── Render: Fallback Erro ────────────────────────────────────────────────

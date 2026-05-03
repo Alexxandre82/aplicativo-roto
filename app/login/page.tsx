@@ -122,15 +122,14 @@ export default function LoginPage() {
     if (min < 60) return `${min} min`;
     const h = Math.floor(min / 60);
     const m = min % 60;
-    if (m === 0) return `${h}h`;
-    return `${h}:${m.toString().padStart(2, "0")}hrs`;
+    if (m === 0) return `${h}hr`;
+    return `${h}:${m.toString().padStart(2, "0")}`;
   }
 
   return (
     <main className="login-page">
       <div className="login-card">
         <div className="login-header">
-          <p className="login-brand">ROTO FERMAX CD</p>
           <h1>{modoCadastro ? "Criar cadastro" : "Acesso ao Sistema"}</h1>
           <p className="login-subtitle">
             {modoCadastro
@@ -150,7 +149,7 @@ export default function LoginPage() {
               />
               <div>
                 <label className="login-label" style={{ color: "#fff", fontSize: 13, fontWeight: 600, marginBottom: 6, display: "block" }}>
-                  Carga horária diária <span style={{ color: "var(--primary-light)", marginLeft: 6 }}>({formatarMinutos(cargaHoraria)})</span>
+                  Carga horária diária
                 </label>
                 <input
                   type="number"
@@ -161,7 +160,7 @@ export default function LoginPage() {
                   onChange={(e) => setCargaHoraria(e.target.value)}
                 />
                 <p className="login-hint-small" style={{ color: "rgba(255,255,255,0.85)", fontSize: 11, marginTop: 6 }}>
-                  Turno completo = 501 min · Meio período = 240 min
+                  Turno completo = 501 min <span style={{ color: "var(--primary-light)", fontWeight: 600, marginLeft: 4 }}>({formatarMinutos(cargaHoraria)})</span>
                 </p>
               </div>
             </>

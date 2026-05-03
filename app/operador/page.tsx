@@ -23,13 +23,17 @@ function RotoLogo() {
   );
 }
 
+// ─── Componente Principal ────────────────────────────────────────────────────
 export default function OperadorPage() {
   const router = useRouter();
 
+  // Estados Base
   const [user, setUser] = useState<any>(null);
   const [activities, setActivities] = useState<any[]>([]);
   const [historico, setHistorico] = useState<any[]>([]);
+  const [erroConexao, setErroConexao] = useState(false);
 
+  // Estados Nova Atividade
   const [busca, setBusca] = useState("");
   const [selectedActivity, setSelectedActivity] = useState("");
   const [selectedActivityNome, setSelectedActivityNome] = useState("");
@@ -37,17 +41,28 @@ export default function OperadorPage() {
   const buscaRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Cronômetro
   const [inicio, setInicio] = useState<Date | null>(null);
   const [tempo, setTempo] = useState(0);
 
+  // Confirmação
   const [confirmando, setConfirmando] = useState(false);
   const [ajusteManual, setAjusteManual] = useState(false);
   const [minutosManuais, setMinutosManuais] = useState("");
-
-  const [mostrarHistorico, setMostrarHistorico] = useState(false);
   const [sessaoRecuperada, setSessaoRecuperada] = useState(false);
-
   const confirmacaoRef = useRef<HTMLDivElement>(null);
+
+  // Histórico
+  const [mostrarHistorico, setMostrarHistorico] = useState(false);
+  const [dataFiltroHistorico, setDataFiltroHistorico] = useState(() => {
+    // Inicializa com a data de hoje no fuso local (YYYY-MM-DD)
+    const hoje = new Date();
+    return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
+  });
+
+  // Edição
+  const [editandoId, setEditandoId] = useState("");
+  const [editMinutos, setEditMinutos] = useState("");
 
   // ─── Init ─────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -56,8 +71,13 @@ export default function OperadorPage() {
     const profile = JSON.parse(savedUser);
     setUser(profile);
     loadActivities(profile);
-    loadHistorico(profile.id);
   }, [router]);
+
+  useEffect(() => {
+    if (user && dataFiltroHistorico) {
+      loadHistorico(user.id, dataFiltroHistorico);
+    }
+  }, [user, dataFiltroHistorico]);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -79,11 +99,23 @@ export default function OperadorPage() {
 
   // ─── Carregar atividades ──────────────────────────────────────────────────
   async function loadActivities(profile: any) {
-    const { data } = await supabase
-      .from("activity_catalog")
-      .select("id, nome, categoria, setor, impacto")
-      .order("nome", { ascending: true });
-    if (data) { setActivities(data); tentarRecuperarSessao(data); }
+    try {
+      const { data, error } = await supabase
+        .from("activity_catalog")
+        .select("id, nome, categoria, setor, impacto")
+        .order("nome", { ascending: true });
+      
+      if (error) throw error;
+      
+      if (data) { 
+        setActivities(data); 
+        tentarRecuperarSessao(data); 
+        setErroConexao(false);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar atividades:", err);
+      setErroConexao(true);
+    }
   }
 
   function tentarRecuperarSessao(lista: any[]) {
@@ -93,10 +125,13 @@ export default function OperadorPage() {
       const sessao: SessaoSalva = JSON.parse(raw);
       const atividadeExiste = lista.find((a) => a.id === sessao.atividadeId);
       if (!atividadeExiste) { localStorage.removeItem(SESSAO_KEY); return; }
+      
       const inicioRecuperado = new Date(sessao.inicio);
       const agora = new Date();
       const diffHoras = (agora.getTime() - inicioRecuperado.getTime()) / 3600000;
-      if (diffHoras > 12) { localStorage.removeItem(SESSAO_KEY); return; }
+      
+      if (diffHoras > 12) { localStorage.removeItem(SESSAO_KEY); return; } // Descarta se for muito antigo (>12h)
+      
       setSelectedActivity(sessao.atividadeId);
       setSelectedActivityNome(sessao.atividadeNome);
       setInicio(inicioRecuperado);
@@ -116,22 +151,38 @@ export default function OperadorPage() {
     return () => clearInterval(interval);
   }, [inicio, confirmando]);
 
-  // ─── Histórico ────────────────────────────────────────────────────────────
-  async function loadHistorico(userId: string) {
-    const hoje = new Date();
-    const inicioDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 0, 0, 0);
-    const fimDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 23, 59, 59);
-    const { data } = await supabase
-      .from("activity_logs")
-      .select("*")
-      .eq("operator_id", userId)
-      .gte("inicio", inicioDia.toISOString())
-      .lte("inicio", fimDia.toISOString())
-      .order("inicio", { ascending: false });
-    if (data) setHistorico(data);
+  // ─── Histórico (Carregar) ──────────────────────────────────────────────────
+  async function loadHistorico(userId: string, dataFiltro: string) {
+    try {
+      const [ano, mes, dia] = dataFiltro.split("-").map(Number);
+      const inicioDia = new Date(ano, mes - 1, dia, 0, 0, 0);
+      const fimDia = new Date(ano, mes - 1, dia, 23, 59, 59);
+      
+      const { data, error } = await supabase
+        .from("activity_logs")
+        .select("*")
+        .eq("operator_id", userId)
+        .gte("inicio", inicioDia.toISOString())
+        .lte("inicio", fimDia.toISOString())
+        .order("inicio", { ascending: false });
+        
+      if (error) throw error;
+      if (data) setHistorico(data);
+      setErroConexao(false);
+    } catch (err) {
+      console.error("Erro ao carregar histórico:", err);
+      // Se já carregou as atividades com sucesso, apenas avisa. Se não, tela de erro.
+      if (activities.length === 0) setErroConexao(true);
+    }
   }
 
-  // ─── Ações ────────────────────────────────────────────────────────────────
+  function mudarDiaFiltro(dias: number) {
+    const atual = new Date(dataFiltroHistorico + "T12:00:00");
+    atual.setDate(atual.getDate() + dias);
+    setDataFiltroHistorico(`${atual.getFullYear()}-${String(atual.getMonth() + 1).padStart(2, "0")}-${String(atual.getDate()).padStart(2, "0")}`);
+  }
+
+  // ─── Ações de Atividade ────────────────────────────────────────────────────
   function selecionarAtividade(a: any) {
     setSelectedActivity(a.id);
     setSelectedActivityNome(a.nome);
@@ -158,6 +209,10 @@ export default function OperadorPage() {
   function abrirConfirmacao() {
     const minutosCalculados = Math.max(1, Math.ceil(tempo / 60));
     setMinutosManuais(String(minutosCalculados));
+    // Notificação de esquecimento (se rodou por mais de 4 horas = 14400s)
+    if (tempo > 14400) {
+      setAjusteManual(true);
+    }
     setConfirmando(true);
   }
 
@@ -166,27 +221,36 @@ export default function OperadorPage() {
     const fim = new Date();
     const minutosCalculados = Math.max(1, Math.ceil((fim.getTime() - inicio.getTime()) / 60000));
     const minutosFinal = ajusteManual ? Number(minutosManuais) : minutosCalculados;
+    
     if (!minutosFinal || minutosFinal < 1) { alert("Informe um tempo válido."); return; }
+    
     const atividade = activities.find((a) => a.id === selectedActivity);
     if (!atividade) { alert("Atividade não encontrada."); return; }
-    const { error } = await supabase.from("activity_logs").insert([{
-      operator_id: user.id,
-      atividade_nome: atividade.nome,
-      categoria: atividade.categoria,
-      setor: atividade.setor,
-      impacto: atividade.impacto,
-      motivo: ajusteManual ? "Esqueci o celular / ajuste manual" : null,
-      observacao: ajusteManual ? `Tempo ajustado manualmente para ${minutosFinal} minutos.` : null,
-      inicio: inicio.toISOString(),
-      fim: fim.toISOString(),
-      duration_minutes: minutosFinal,
-      manual_adjusted: ajusteManual,
-      session_id: crypto.randomUUID(),
-    }]);
-    if (error) { alert("Erro ao salvar: " + error.message); return; }
-    localStorage.removeItem(SESSAO_KEY);
-    resetar();
-    await loadHistorico(user.id);
+    
+    try {
+      const { error } = await supabase.from("activity_logs").insert([{
+        operator_id: user.id,
+        atividade_nome: atividade.nome,
+        categoria: atividade.categoria,
+        setor: atividade.setor,
+        impacto: atividade.impacto,
+        motivo: ajusteManual ? "Esqueci o celular / ajuste manual" : null,
+        observacao: ajusteManual ? `Tempo ajustado manualmente para ${minutosFinal} minutos.` : null,
+        inicio: inicio.toISOString(),
+        fim: fim.toISOString(),
+        duration_minutes: minutosFinal,
+        manual_adjusted: ajusteManual,
+        session_id: crypto.randomUUID(),
+      }]);
+      
+      if (error) throw error;
+      
+      localStorage.removeItem(SESSAO_KEY);
+      resetar();
+      await loadHistorico(user.id, dataFiltroHistorico);
+    } catch (err: any) {
+      alert("Erro ao salvar: " + err.message);
+    }
   }
 
   function resetar() {
@@ -198,6 +262,41 @@ export default function OperadorPage() {
   }
 
   function cancelarAtividade() { localStorage.removeItem(SESSAO_KEY); resetar(); }
+
+  // ─── Ações de Edição/Exclusão do Histórico ─────────────────────────────────
+  async function excluirRegistro(id: string) {
+    if (!confirm("Tem certeza que deseja apagar este registro?")) return;
+    try {
+      const { error } = await supabase.from("activity_logs").delete().eq("id", id);
+      if (error) throw error;
+      setHistorico(historico.filter(h => h.id !== id));
+    } catch (err: any) {
+      alert("Erro ao excluir: " + err.message);
+    }
+  }
+
+  function iniciarEdicao(item: any) {
+    setEditandoId(item.id);
+    setEditMinutos(String(item.duration_minutes));
+  }
+
+  async function salvarEdicao() {
+    if (!editMinutos || Number(editMinutos) < 1) { alert("Informe um tempo válido."); return; }
+    try {
+      const { error } = await supabase.from("activity_logs").update({
+        duration_minutes: Number(editMinutos),
+        manual_adjusted: true,
+        observacao: `Editado pelo operador. Tempo anterior alterado.`,
+      }).eq("id", editandoId);
+      
+      if (error) throw error;
+      
+      setEditandoId("");
+      await loadHistorico(user?.id, dataFiltroHistorico);
+    } catch (err: any) {
+      alert("Erro ao salvar edição: " + err.message);
+    }
+  }
 
   // ─── Formatação ───────────────────────────────────────────────────────────
   function formatarTempo(s: number) {
@@ -211,12 +310,35 @@ export default function OperadorPage() {
     return new Date(data).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   }
 
+  // ─── Render: Fallback Erro ────────────────────────────────────────────────
+  if (erroConexao) {
+    return (
+      <div className="roto-page" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 20 }}>
+        <p style={{ fontSize: 60, margin: 0 }}>🔌</p>
+        <h2 className="roto-title" style={{ marginTop: 20, textAlign: "center" }}>Sem conexão</h2>
+        <p className="roto-muted" style={{ textAlign: "center", maxWidth: 300, marginTop: 10 }}>
+          Não foi possível conectar ao servidor. Verifique sua internet ou tente novamente mais tarde.
+        </p>
+        <button 
+          className="roto-button" 
+          style={{ marginTop: 24, maxWidth: 200 }}
+          onClick={() => window.location.reload()}
+        >
+          Tentar Novamente
+        </button>
+      </div>
+    );
+  }
+
+  // Variáveis para UI normal
   const minutosCalculados = Math.max(1, Math.ceil(tempo / 60));
   const atividadesFiltradas = activities.filter((a) =>
     a.nome.toLowerCase().includes(busca.toLowerCase())
   );
+  const esqueceuAtividade = tempo > 14400; // Maior que 4 horas
+  const hojeString = new Date().toISOString().split("T")[0];
 
-  // ─── Render ───────────────────────────────────────────────────────────────
+  // ─── Render: App Normal ───────────────────────────────────────────────────
   return (
     <div className="roto-page">
 
@@ -246,16 +368,18 @@ export default function OperadorPage() {
         </div>
 
         {/* Sessão recuperada */}
-        {sessaoRecuperada && inicio && (
-          <div className="roto-card-red" style={{ marginBottom: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 18 }}>⚡</span>
+        {sessaoRecuperada && inicio && !confirmando && (
+          <div className="roto-card-red" style={{ marginBottom: 16, borderLeftColor: esqueceuAtividade ? "var(--roto-red)" : "var(--primary)" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+              <span style={{ fontSize: 22 }}>{esqueceuAtividade ? "⚠️" : "⚡"}</span>
               <div>
-                <p style={{ fontWeight: 700, fontSize: 13, color: "var(--roto-red)", margin: 0 }}>
-                  Sessão recuperada
+                <p style={{ fontWeight: 800, fontSize: 14, color: esqueceuAtividade ? "var(--roto-red)" : "var(--primary)", margin: 0 }}>
+                  {esqueceuAtividade ? "Você esqueceu de finalizar?" : "Sessão recuperada"}
                 </p>
-                <p className="roto-muted" style={{ marginTop: 2 }}>
-                  Cronômetro retomado desde {formatarHora(inicio.toISOString())}
+                <p className="roto-muted" style={{ marginTop: 4, lineHeight: 1.4, color: esqueceuAtividade ? "var(--roto-red)" : "var(--muted)" }}>
+                  {esqueceuAtividade 
+                    ? `Esta atividade está aberta há mais de ${Math.floor(tempo/3600)} horas. Finalize agora e ajuste seu tempo real manualmente.`
+                    : `Cronômetro retomado desde ${formatarHora(inicio.toISOString())}`}
                 </p>
               </div>
             </div>
@@ -355,9 +479,9 @@ export default function OperadorPage() {
         ) : (
           <>
             {/* ── Em andamento ── */}
-            <div className="roto-card-teal" style={{ textAlign: "center" }}>
-              <span className="roto-badge roto-badge-teal" style={{ marginBottom: 8 }}>
-                ● Em andamento
+            <div className="roto-card-teal" style={{ textAlign: "center", borderColor: esqueceuAtividade ? "var(--roto-red)" : "var(--teal)" }}>
+              <span className={`roto-badge ${esqueceuAtividade ? "roto-badge-red" : "roto-badge-teal"}`} style={{ marginBottom: 8 }}>
+                ● Em andamento {esqueceuAtividade && "(Extrapolado)"}
               </span>
 
               <p style={{
@@ -378,7 +502,7 @@ export default function OperadorPage() {
                 fontSize: "clamp(64px, 20vw, 88px)",
                 fontWeight: 900,
                 letterSpacing: "-0.02em",
-                color: confirmando ? "var(--muted)" : "var(--primary)",
+                color: confirmando ? "var(--muted)" : esqueceuAtividade ? "var(--roto-red)" : "var(--primary)",
                 margin: "8px 0 16px",
                 opacity: confirmando ? 0.4 : 1,
                 lineHeight: 1,
@@ -428,7 +552,7 @@ export default function OperadorPage() {
                   padding: "14px",
                   background: "var(--bg)",
                   borderRadius: "var(--radius-sm)",
-                  border: "1px solid var(--border)",
+                  border: esqueceuAtividade ? "1px solid var(--roto-red)" : "1px solid var(--border)",
                   cursor: "pointer",
                   marginBottom: 12,
                 }}>
@@ -438,8 +562,8 @@ export default function OperadorPage() {
                     onChange={(e) => setAjusteManual(e.target.checked)}
                     style={{ marginTop: 2, accentColor: "var(--primary)" }}
                   />
-                  <span style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                    Esqueci o celular / ajustar tempo manualmente
+                  <span style={{ fontSize: 13, color: esqueceuAtividade ? "var(--roto-red)" : "var(--text-secondary)", lineHeight: 1.5, fontWeight: esqueceuAtividade ? 600 : 400 }}>
+                    {esqueceuAtividade ? "ATENÇÃO: Ajuste o tempo manualmente para o tempo real que você trabalhou nesta atividade." : "Esqueci o celular / ajustar tempo manualmente"}
                   </span>
                 </label>
 
@@ -475,52 +599,97 @@ export default function OperadorPage() {
         )}
 
         {/* ── Histórico ── */}
-        <div style={{ marginTop: 20 }}>
+        <div style={{ marginTop: 32 }}>
           <button
             onClick={() => setMostrarHistorico(!mostrarHistorico)}
             className="roto-button-secondary"
             style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" }}
           >
-            <span>Histórico de hoje ({historico.length})</span>
+            <span style={{ fontWeight: 700 }}>Histórico ({historico.length})</span>
             <span>{mostrarHistorico ? "▲" : "▼"}</span>
           </button>
 
           {mostrarHistorico && (
-            <div className="roto-card" style={{ marginTop: 10 }}>
-              {historico.length === 0 ? (
-                <p className="roto-muted" style={{ textAlign: "center", padding: "16px 0" }}>
-                  Nenhuma atividade registrada hoje.
-                </p>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-                  {historico.map((item, idx) => (
-                    <div
-                      key={item.id}
-                      style={{
-                        padding: "14px 0",
-                        borderBottom: idx < historico.length - 1 ? "1px solid var(--border)" : "none",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        gap: 12,
-                      }}
-                    >
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontWeight: 600, fontSize: 14, margin: 0, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {item.atividade_nome}
-                        </p>
-                        <p className="roto-muted" style={{ marginTop: 2 }}>
-                          {formatarHora(item.inicio)} → {formatarHora(item.fim)}
-                          {item.manual_adjusted && " · ajuste manual"}
-                        </p>
+            <div className="roto-card" style={{ marginTop: 10, padding: 0, overflow: "hidden" }}>
+              
+              {/* Controle de Data */}
+              <div style={{ 
+                background: "var(--bg-raised)", 
+                padding: "12px 16px", 
+                borderBottom: "1px solid var(--border)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center"
+              }}>
+                <button onClick={() => mudarDiaFiltro(-1)} style={{ background: "none", border: "none", padding: "4px 8px", cursor: "pointer", fontSize: 16 }}>◀</button>
+                <input 
+                  type="date" 
+                  value={dataFiltroHistorico} 
+                  onChange={e => setDataFiltroHistorico(e.target.value)}
+                  style={{ border: "1px solid var(--border)", borderRadius: 4, padding: "4px 8px", fontSize: 13, background: "#fff", outline: "none", color: "var(--text)" }}
+                />
+                <button onClick={() => mudarDiaFiltro(1)} disabled={dataFiltroHistorico === hojeString} style={{ background: "none", border: "none", padding: "4px 8px", cursor: dataFiltroHistorico === hojeString ? "default" : "pointer", opacity: dataFiltroHistorico === hojeString ? 0.3 : 1, fontSize: 16 }}>▶</button>
+              </div>
+
+              <div style={{ padding: 16 }}>
+                {historico.length === 0 ? (
+                  <p className="roto-muted" style={{ textAlign: "center", padding: "16px 0", margin: 0 }}>
+                    Nenhuma atividade registrada neste dia.
+                  </p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                    {historico.map((item, idx) => (
+                      <div
+                        key={item.id}
+                        style={{
+                          padding: "14px 0",
+                          borderBottom: idx < historico.length - 1 ? "1px solid var(--border)" : "none",
+                        }}
+                      >
+                        {/* Linha principal */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontWeight: 600, fontSize: 14, margin: 0, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {item.atividade_nome}
+                            </p>
+                            <p className="roto-muted" style={{ marginTop: 2 }}>
+                              {formatarHora(item.inicio)} → {formatarHora(item.fim)}
+                              {item.manual_adjusted && " · ajustado"}
+                            </p>
+                          </div>
+                          <span className="roto-badge roto-badge-primary" style={{ flexShrink: 0 }}>
+                            {item.duration_minutes} min
+                          </span>
+                        </div>
+
+                        {/* Edição / Ações */}
+                        {editandoId === item.id ? (
+                          <div style={{ marginTop: 12, padding: 12, background: "var(--bg-raised)", borderRadius: 6, border: "1px solid var(--border-hi)" }}>
+                            <p className="roto-label" style={{ marginBottom: 8 }}>Editar Minutos</p>
+                            <div style={{ display: "flex", gap: 8 }}>
+                              <input 
+                                type="number" 
+                                min="1"
+                                className="roto-input" 
+                                style={{ padding: "8px 12px" }}
+                                value={editMinutos}
+                                onChange={e => setEditMinutos(e.target.value)}
+                              />
+                              <button onClick={salvarEdicao} className="roto-button" style={{ padding: "8px 16px", width: "auto" }}>Salvar</button>
+                              <button onClick={() => setEditandoId("")} className="roto-button-secondary" style={{ padding: "8px 12px", width: "auto" }}>✕</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
+                            <button onClick={() => iniciarEdicao(item)} style={{ background: "none", border: "none", padding: 0, color: "var(--primary)", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>✏️ Editar</button>
+                            <button onClick={() => excluirRegistro(item.id)} style={{ background: "none", border: "none", padding: 0, color: "var(--roto-red)", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>🗑️ Excluir</button>
+                          </div>
+                        )}
                       </div>
-                      <span className="roto-badge roto-badge-primary" style={{ flexShrink: 0 }}>
-                        {item.duration_minutes} min
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

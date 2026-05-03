@@ -114,7 +114,7 @@ export default function LoginPage() {
     ]);
 
     if (error) {
-      setErro("Erro ao criar perfil.");
+      setErro("Erro ao criar perfil. " + (error?.message || ""));
       setLoading(false);
       return;
     }

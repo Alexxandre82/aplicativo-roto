@@ -409,7 +409,7 @@ button, input, select, textarea {
   padding: 20px 16px;
   background-color: #1a0a0a;
   background-image:
-    linear-gradient(180deg, rgba(10,0,0,0.45) 0%, rgba(10,0,0,0.65) 100%),
+    linear-gradient(180deg, rgba(10,0,0,0.2) 0%, rgba(10,0,0,0.5) 100%),
     url("/fundo app.png");
   background-size: cover;
   background-repeat: no-repeat;
@@ -419,13 +419,13 @@ button, input, select, textarea {
 .login-card {
   width: 100%;
   max-width: 400px;
-  background: rgba(10,5,5,0.88);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(10,5,5,0.4);
+  border: 1px solid rgba(255,255,255,0.15);
   border-top: 4px solid var(--roto-red);
   border-radius: 16px;
   padding: 28px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   box-shadow: 0 24px 70px rgba(0,0,0,0.55);
 }
 
@@ -537,7 +537,7 @@ button, input, select, textarea {
   .roto-card, .roto-card-primary, .roto-card-red, .roto-card-teal { padding: 16px; }
   .login-page { 
     background-image: 
-      linear-gradient(180deg, rgba(10,0,0,0.5) 0%, rgba(10,0,0,0.7) 100%),
+      linear-gradient(180deg, rgba(10,0,0,0.2) 0%, rgba(10,0,0,0.4) 100%),
       url("/topo.png?v=1"),
       url("/rodape.png?v=1");
     background-size: 

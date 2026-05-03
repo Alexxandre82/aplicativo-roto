@@ -154,7 +154,7 @@ export default function LoginPage() {
 
     const { error: profileError } = await supabase.from("profiles").upsert([
       {
-        id: authData.user.id,
+        id: authData?.user?.id as string,
         nome: nomeFinal,
         matricula: matriculaLimpa,
         senha: "migrated_to_auth",

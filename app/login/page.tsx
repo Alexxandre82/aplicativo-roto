@@ -23,23 +23,28 @@ export default function LoginPage() {
       return;
     }
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("matricula", matricula.trim())
-      .eq("ativo", true)
-      .maybeSingle();
+    // Usando Supabase Auth nativo
+    const emailFake = `${matricula.trim()}@roto.com`;
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email: emailFake,
+      password: senha.trim(),
+    });
 
-    if (error || !data) {
+    if (authError || !authData.user) {
       setErro("Matrícula ou senha inválida.");
       setLoading(false);
       return;
     }
 
-    const senhaCorreta = await verificarSenha(senha.trim(), data.senha);
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", authData.user.id)
+      .eq("ativo", true)
+      .maybeSingle();
 
-    if (!senhaCorreta) {
-      setErro("Matrícula ou senha inválida.");
+    if (error || !data) {
+      setErro("Perfil não encontrado ou inativo.");
       setLoading(false);
       return;
     }
@@ -79,25 +84,23 @@ export default function LoginPage() {
       return;
     }
 
-    const { data: existente } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("matricula", matricula.trim())
-      .maybeSingle();
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: `${matricula.trim()}@roto.com`,
+      password: senha.trim(),
+    });
 
-    if (existente) {
-      setErro("Essa matrícula já está cadastrada.");
+    if (authError || !authData.user) {
+      setErro("Matrícula já em uso ou erro no servidor.");
       setLoading(false);
       return;
     }
 
-    const senhaHash = await hashSenha(senha.trim());
-
     const { error } = await supabase.from("profiles").insert([
       {
+        id: authData.user.id,
         nome: nome.trim(),
         matricula: matricula.trim(),
-        senha: senhaHash,
+        senha: "migrated_to_auth",
         perfil: "operador",
         ativo: true,
         minutos_dia: minutos,
@@ -105,7 +108,7 @@ export default function LoginPage() {
     ]);
 
     if (error) {
-      setErro("Erro ao criar cadastro.");
+      setErro("Erro ao criar perfil.");
       setLoading(false);
       return;
     }

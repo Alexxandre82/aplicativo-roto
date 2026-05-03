@@ -44,6 +44,7 @@ export default function OperadorPage() {
   // Cronômetro
   const [inicio, setInicio] = useState<Date | null>(null);
   const [tempo, setTempo] = useState(0);
+  const [activeLogId, setActiveLogId] = useState<string | null>(null);
 
   // Confirmação
   const [confirmando, setConfirmando] = useState(false);
@@ -68,9 +69,17 @@ export default function OperadorPage() {
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (!savedUser) { router.replace("/login"); return; }
-    const profile = JSON.parse(savedUser);
-    setUser(profile);
-    loadActivities(profile);
+    
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        localStorage.removeItem("user");
+        router.replace("/login");
+        return;
+      }
+      const profile = JSON.parse(savedUser);
+      setUser(profile);
+      loadActivities(profile);
+    });
   }, [router]);
 
   useEffect(() => {
@@ -109,7 +118,7 @@ export default function OperadorPage() {
       
       if (data) { 
         setActivities(data); 
-        tentarRecuperarSessao(data); 
+        tentarRecuperarSessao(data, profile.id); 
         setErroConexao(false);
       }
     } catch (err) {
@@ -118,8 +127,34 @@ export default function OperadorPage() {
     }
   }
 
-  function tentarRecuperarSessao(lista: any[]) {
+  async function tentarRecuperarSessao(lista: any[], userId: string) {
     try {
+      // 1. Nuvem (Sessão Robusta)
+      const { data: logAtivo } = await supabase
+        .from("activity_logs")
+        .select("*")
+        .eq("operator_id", userId)
+        .is("fim", null)
+        .order("inicio", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (logAtivo) {
+        const inicioRecuperado = new Date(logAtivo.inicio);
+        const agora = new Date();
+        const atividadeExiste = lista.find((a) => a.nome === logAtivo.atividade_nome);
+        if (atividadeExiste) {
+          setSelectedActivity(atividadeExiste.id);
+        }
+        setSelectedActivityNome(logAtivo.atividade_nome);
+        setInicio(inicioRecuperado);
+        setTempo(Math.floor((agora.getTime() - inicioRecuperado.getTime()) / 1000));
+        setSessaoRecuperada(true);
+        setActiveLogId(logAtivo.id);
+        return;
+      }
+
+      // 2. Fallback Local
       const raw = localStorage.getItem(SESSAO_KEY);
       if (!raw) return;
       const sessao: SessaoSalva = JSON.parse(raw);
@@ -137,7 +172,10 @@ export default function OperadorPage() {
       setInicio(inicioRecuperado);
       setTempo(Math.floor((agora.getTime() - inicioRecuperado.getTime()) / 1000));
       setSessaoRecuperada(true);
-    } catch { localStorage.removeItem(SESSAO_KEY); }
+    } catch (err) {
+      console.error(err);
+      localStorage.removeItem(SESSAO_KEY); 
+    }
   }
 
   // ─── Cronômetro ───────────────────────────────────────────────────────────
@@ -190,8 +228,12 @@ export default function OperadorPage() {
     setDropdownAberto(false);
   }
 
-  function iniciar() {
-    if (!selectedActivity) { alert("Selecione uma atividade."); return; }
+  async function iniciar() {
+    if (!selectedActivity || !user) { alert("Selecione uma atividade."); return; }
+    
+    const atividade = activities.find((a) => a.id === selectedActivity);
+    if (!atividade) return;
+
     const agora = new Date();
     setInicio(agora);
     setTempo(0);
@@ -199,11 +241,34 @@ export default function OperadorPage() {
     setAjusteManual(false);
     setMinutosManuais("");
     setSessaoRecuperada(false);
-    localStorage.setItem(SESSAO_KEY, JSON.stringify({
-      atividadeId: selectedActivity,
-      atividadeNome: selectedActivityNome,
-      inicio: agora.toISOString(),
-    }));
+
+    try {
+      const { data, error } = await supabase.from("activity_logs").insert([{
+        operator_id: user.id,
+        atividade_nome: atividade.nome,
+        categoria: atividade.categoria,
+        setor: atividade.setor,
+        impacto: atividade.impacto,
+        inicio: agora.toISOString(),
+        fim: null,
+        duration_minutes: 0,
+        manual_adjusted: false,
+        session_id: crypto.randomUUID(),
+      }]).select("id").single();
+      
+      if (error) throw error;
+      setActiveLogId(data.id);
+      
+      // Fallback local
+      localStorage.setItem(SESSAO_KEY, JSON.stringify({
+        atividadeId: selectedActivity,
+        atividadeNome: selectedActivityNome,
+        inicio: agora.toISOString(),
+      }));
+    } catch (err: any) {
+      alert("Erro ao iniciar na nuvem: " + err.message);
+      resetar();
+    }
   }
 
   function abrirConfirmacao() {
@@ -228,24 +293,35 @@ export default function OperadorPage() {
     if (!atividade) { alert("Atividade não encontrada."); return; }
     
     try {
-      const { error } = await supabase.from("activity_logs").insert([{
-        operator_id: user.id,
-        atividade_nome: atividade.nome,
-        categoria: atividade.categoria,
-        setor: atividade.setor,
-        impacto: atividade.impacto,
-        motivo: ajusteManual ? "Esqueci o celular / ajuste manual" : null,
-        observacao: ajusteManual ? `Tempo ajustado manualmente para ${minutosFinal} minutos.` : null,
-        inicio: inicio.toISOString(),
-        fim: fim.toISOString(),
-        duration_minutes: minutosFinal,
-        manual_adjusted: ajusteManual,
-        session_id: crypto.randomUUID(),
-      }]);
-      
-      if (error) throw error;
+      if (activeLogId) {
+        const { error } = await supabase.from("activity_logs").update({
+          fim: fim.toISOString(),
+          duration_minutes: minutosFinal,
+          manual_adjusted: ajusteManual,
+          motivo: ajusteManual ? "Esqueci o celular / ajuste manual" : null,
+          observacao: ajusteManual ? `Tempo ajustado para ${minutosFinal} minutos.` : null,
+        }).eq("id", activeLogId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("activity_logs").insert([{
+          operator_id: user.id,
+          atividade_nome: atividade.nome,
+          categoria: atividade.categoria,
+          setor: atividade.setor,
+          impacto: atividade.impacto,
+          motivo: ajusteManual ? "Esqueci o celular / ajuste manual" : null,
+          observacao: ajusteManual ? `Tempo ajustado manualmente para ${minutosFinal} minutos.` : null,
+          inicio: inicio.toISOString(),
+          fim: fim.toISOString(),
+          duration_minutes: minutosFinal,
+          manual_adjusted: ajusteManual,
+          session_id: crypto.randomUUID(),
+        }]);
+        if (error) throw error;
+      }
       
       localStorage.removeItem(SESSAO_KEY);
+      setActiveLogId(null);
       resetar();
       await loadHistorico(user.id, dataFiltroHistorico);
     } catch (err: any) {
@@ -258,6 +334,7 @@ export default function OperadorPage() {
     setSelectedActivity(""); setSelectedActivityNome("");
     setBusca(""); setConfirmando(false);
     setAjusteManual(false); setMinutosManuais("");
+    setActiveLogId(null);
     setSessaoRecuperada(false);
   }
 

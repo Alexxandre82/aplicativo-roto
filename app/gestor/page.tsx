@@ -124,13 +124,22 @@ export default function GestorPage() {
     if (!u) { router.replace("/login"); return; }
     const p = JSON.parse(u);
     if (p.perfil !== "gestor" && p.perfil !== "admin") { router.replace("/operador"); return; }
-    supabase.from("profiles").select("perfil,ativo").eq("id",p.id).maybeSingle().then(({data})=>{
-      if (!data||!data.ativo||(data.perfil!=="gestor"&&data.perfil!=="admin")) {
-        localStorage.removeItem("user"); router.replace("/login");
+    
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        localStorage.removeItem("user");
+        router.replace("/login");
+        return;
       }
+      
+      supabase.from("profiles").select("perfil,ativo").eq("id",p.id).maybeSingle().then(({data})=>{
+        if (!data||!data.ativo||(data.perfil!=="gestor"&&data.perfil!=="admin")) {
+          localStorage.removeItem("user"); router.replace("/login");
+        }
+      });
+      loadDados(periodo, dataFiltro);
     });
-    loadDados(periodo, dataFiltro);
-  }, [router]);
+  }, [router, periodo, dataFiltro]);
 
   async function loadDados(p: Periodo, data: string) {
     setLoading(true);

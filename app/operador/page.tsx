@@ -251,7 +251,7 @@ export default function OperadorPage() {
 
   // ─── Render ──────────────────────────────────────────────────────────────
   return (
-    <main className="roto-page min-h-screen overflow-y-auto pb-10">
+    <main className="roto-page pb-10">
       <div className="mx-auto max-w-md">
 
         {/* Header */}

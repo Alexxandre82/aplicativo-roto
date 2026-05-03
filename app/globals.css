@@ -38,8 +38,6 @@ body {
   font-family: "Inter", system-ui, sans-serif;
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
-  height: 100%;
-  overflow-y: auto;
 }
 
 button,
@@ -59,7 +57,6 @@ select {
     linear-gradient(180deg, #111113 0%, #09090b 100%);
   color: var(--text);
   padding: 24px 16px 48px;
-  overflow-y: visible;
 }
 
 .roto-card {

@@ -127,18 +127,32 @@ export default function LoginPage() {
       return;
     }
 
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    let { data: authData, error: authError } = await supabase.auth.signUp({
       email: emailFake,
       password: senhaSegura,
     });
 
-    if (authError || !authData.user) {
-      setErro("Esta matrícula já existe no Auth, mas está sem perfil. Apague o usuário no Supabase Auth e cadastre novamente.");
+    // Auto-recuperação: Se a conta já existir no Auth, tentamos logar para criar o perfil faltante
+    if (authError && authError.message.includes("already registered")) {
+      const loginAttempt = await supabase.auth.signInWithPassword({
+        email: emailFake,
+        password: senhaSegura,
+      });
+      
+      if (loginAttempt.error || !loginAttempt.data.user) {
+        setErro("Esta matrícula já existe no Auth com uma senha diferente. Apague o usuário no Supabase Auth e cadastre novamente.");
+        setLoading(false);
+        return;
+      }
+      authData = loginAttempt.data;
+      authError = null;
+    } else if (authError || !authData?.user) {
+      setErro("Erro: " + (authError?.message || "Matrícula já em uso."));
       setLoading(false);
       return;
     }
 
-    const { error: profileError } = await supabase.from("profiles").insert([
+    const { error: profileError } = await supabase.from("profiles").upsert([
       {
         id: authData.user.id,
         nome: nomeFinal,
@@ -151,7 +165,7 @@ export default function LoginPage() {
     ]);
 
     if (profileError) {
-      setErro("Usuário criado no Auth, mas falhou ao criar perfil: " + profileError.message);
+      setErro("Usuário validado no Auth, mas falhou ao criar perfil: " + profileError.message);
       setLoading(false);
       return;
     }

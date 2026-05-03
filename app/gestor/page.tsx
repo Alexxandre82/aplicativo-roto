@@ -44,13 +44,13 @@ function formatMin(min: number) {
 }
 
 function exportarCSV(logs: any[], nome: string) {
-  const cab = ["Data","Hora início","Hora fim","Operador","Atividade","Categoria","Minutos","Ajuste manual"];
+  const cab = ["Data","Hora início","Hora fim","Operador","Atividade","Duração","Ajuste manual"];
   const lin = logs.map(l => [
     new Date(l.inicio).toLocaleDateString("pt-BR"),
     new Date(l.inicio).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),
     new Date(l.fim).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}),
-    l.profiles?.nome||l.operator_id, l.atividade_nome, l.categoria||"",
-    l.duration_minutes, l.manual_adjusted?"Sim":"Não",
+    l.profiles?.nome||l.operator_id, l.atividade_nome,
+    formatMin(l.duration_minutes), l.manual_adjusted?"Sim":"Não",
   ]);
   const csv = [cab,...lin].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(";")).join("\n");
   const url = URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"}));

@@ -1,0 +1,324 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap");
+
+:root {
+  --roto-red:      #CC0000;
+  --roto-red-dark: #990000;
+  --roto-red-dim:  rgba(204,0,0,0.3);
+  --roto-red-bg:   #fff5f5;
+  --bg:            #f4f4f5;
+  --bg-card:       #ffffff;
+  --bg-raised:     #f9f9f9;
+  --border:        #e4e4e7;
+  --border-hi:     #d1d1d6;
+  --text:          #18181b;
+  --text-secondary:#333333;
+  --muted:         #555555;
+  --danger:        #dc2626;
+  --warning:       #d97706;
+  --success:       #16a34a;
+  --card-radius:   4px;
+  --btn-radius:    4px;
+}
+
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  height: 100%;
+  overflow-y: auto;
+}
+
+button,
+input,
+select {
+  font-family: inherit;
+}
+
+/* =========================
+   TELAS OPERADOR / GESTOR
+========================= */
+
+.roto-page {
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at top left, rgba(204, 0, 0, 0.18), transparent 32%),
+    linear-gradient(180deg, #111113 0%, #09090b 100%);
+  color: var(--text);
+  padding: 24px 16px 48px;
+  overflow-y: visible;
+}
+
+.roto-card {
+  background: linear-gradient(180deg, var(--bg-card) 0%, #101012 100%);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--roto-red);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+}
+
+.roto-muted {
+  color: var(--muted);
+  font-size: 12px;
+  font-family: "Barlow Condensed", sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.roto-input {
+  width: 100%;
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--border-hi);
+  border-radius: var(--radius-input);
+  padding: 16px;
+  outline: none;
+  font-size: 16px;
+}
+
+.roto-input:focus {
+  border-color: var(--roto-red);
+  box-shadow: 0 0 0 3px var(--roto-red-soft);
+}
+
+.roto-button {
+  width: 100%;
+  background: var(--roto-red);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-input);
+  padding: 16px;
+  font-weight: 900;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(204, 0, 0, 0.32);
+}
+
+.roto-button:hover {
+  background: var(--roto-red-dark);
+}
+
+.roto-button:disabled {
+  background: #3f3f46;
+  color: #a1a1aa;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.roto-button-secondary {
+  background: var(--bg-card-soft);
+  color: var(--text);
+  border: 1px solid var(--border-hi);
+  border-radius: var(--radius-input);
+  padding: 14px 18px;
+  font-weight: 800;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.roto-button-secondary:hover {
+  border-color: var(--roto-red);
+  color: #fff;
+}
+
+.roto-button-danger {
+  width: 100%;
+  background: var(--danger);
+  color: white;
+  border: none;
+  border-radius: var(--radius-input);
+  padding: 16px;
+  font-weight: 900;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(220, 38, 38, 0.32);
+}
+
+.roto-button-danger:hover {
+  background: #b91c1c;
+}
+
+/* =========================
+   LOGIN
+========================= */
+
+.login-page {
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background-color: #0d0d0d;
+  background-image:
+    linear-gradient(rgba(5, 5, 6, 0.58), rgba(5, 5, 6, 0.88)),
+    url("/fundo app.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center top;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(10, 10, 10, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 4px solid var(--roto-red);
+  border-radius: 18px;
+  padding: 32px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.65);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.login-brand {
+  display: inline-block;
+  color: var(--roto-red);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  padding: 6px 14px;
+  border: 1px solid rgba(204, 0, 0, 0.45);
+  background: rgba(204, 0, 0, 0.12);
+  border-radius: 6px;
+}
+
+.login-header h1 {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin: 0;
+  color: #f4f4f5;
+}
+
+.login-subtitle {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 12px;
+  margin-top: 10px;
+  font-family: "Barlow Condensed", sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.login-form input {
+  width: 100%;
+  display: block;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f4f4f5;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 16px;
+  outline: none;
+}
+
+.login-form input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.login-form input:focus {
+  border-color: var(--roto-red);
+  background: rgba(255, 255, 255, 0.11);
+}
+
+.login-error {
+  color: #fca5a5;
+  font-size: 12px;
+  padding: 10px 14px;
+  background: rgba(204, 0, 0, 0.18);
+  border-left: 3px solid var(--roto-red);
+  border-radius: 8px;
+}
+
+.login-primary {
+  width: 100%;
+  padding: 16px;
+  font-weight: 900;
+  font-size: 14px;
+  font-family: "Barlow Condensed", sans-serif;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 14px;
+  background: var(--roto-red);
+  color: white;
+  border: none;
+  box-shadow: 0 8px 24px rgba(204, 0, 0, 0.42);
+}
+
+.login-secondary {
+  width: 100%;
+  padding: 14px;
+  font-weight: 800;
+  font-size: 13px;
+  font-family: "Barlow Condensed", sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 480px) {
+  .roto-page {
+    padding: 18px 14px 42px;
+  }
+
+  .roto-card {
+    padding: 18px;
+  }
+
+  .login-card {
+    padding: 26px 20px;
+    border-radius: 18px;
+  }
+
+  .login-header h1 {
+    font-size: 25px;
+  }
+}

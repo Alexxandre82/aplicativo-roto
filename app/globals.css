@@ -537,18 +537,11 @@ button, input, select, textarea {
   .roto-card, .roto-card-primary, .roto-card-red, .roto-card-teal { padding: 16px; }
   .login-page { 
     background-image: 
-      linear-gradient(180deg, rgba(10,0,0,0.6) 0%, rgba(10,0,0,0.85) 100%),
-      url("/fundo app.png"),
-      url("/fundo app.png");
-    background-size: 
-      100% 100%, 
-      200% auto, /* Camada do topo (fachada) */
-      200% auto; /* Camada do rodapé (caminhão) */
-    background-position: 
-      center, 
-      top center, 
-      bottom center;
-    background-repeat: no-repeat, no-repeat, no-repeat;
+      linear-gradient(180deg, rgba(10,0,0,0.4) 0%, rgba(10,0,0,0.7) 100%),
+      url("/logo9.16.png");
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
   }
   .login-card { padding: 26px 20px; border-radius: 14px; }
 }

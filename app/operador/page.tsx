@@ -224,7 +224,6 @@ export default function OperadorPage() {
       <header className="roto-header">
         <RotoLogo />
         <div className="roto-header-user">
-          <span className="roto-header-name">{user?.nome || "Operador"}</span>
           <button
             onClick={() => { localStorage.removeItem("user"); router.replace("/login"); }}
             className="roto-button-secondary"

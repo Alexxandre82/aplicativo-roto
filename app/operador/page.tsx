@@ -9,8 +9,18 @@ const SESSAO_KEY = "roto_sessao_ativa";
 type SessaoSalva = {
   atividadeId: string;
   atividadeNome: string;
-  inicio: string; // ISO string
+  inicio: string;
 };
+
+// ─── Logo SVG inline ──────────────────────────────────────────────────────────
+function RotoLogo() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <span className="roto-header-logo-badge">ROTO</span>
+      <span className="roto-header-title">CD Fermax</span>
+    </div>
+  );
+}
 
 export default function OperadorPage() {
   const router = useRouter();
@@ -19,7 +29,6 @@ export default function OperadorPage() {
   const [activities, setActivities] = useState<any[]>([]);
   const [historico, setHistorico] = useState<any[]>([]);
 
-  // Seleção com busca
   const [busca, setBusca] = useState("");
   const [selectedActivity, setSelectedActivity] = useState("");
   const [selectedActivityNome, setSelectedActivityNome] = useState("");
@@ -27,42 +36,31 @@ export default function OperadorPage() {
   const buscaRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Cronômetro
   const [inicio, setInicio] = useState<Date | null>(null);
   const [tempo, setTempo] = useState(0);
 
-  // Confirmação / ajuste
   const [confirmando, setConfirmando] = useState(false);
   const [ajusteManual, setAjusteManual] = useState(false);
   const [minutosManuais, setMinutosManuais] = useState("");
 
-  // Histórico
   const [mostrarHistorico, setMostrarHistorico] = useState(false);
-
-  // Sessão recuperada
   const [sessaoRecuperada, setSessaoRecuperada] = useState(false);
 
-  // Ref para scroll até a confirmação
   const confirmacaoRef = useRef<HTMLDivElement>(null);
 
-  // ─── Init ────────────────────────────────────────────────────────────────
+  // ─── Init ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (!savedUser) { router.replace("/login"); return; }
-
     const profile = JSON.parse(savedUser);
     setUser(profile);
     loadActivities(profile);
     loadHistorico(profile.id);
   }, [router]);
 
-  // Fechar dropdown ao clicar fora
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownAberto(false);
       }
     }
@@ -70,7 +68,6 @@ export default function OperadorPage() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Scroll automático até a confirmação
   useEffect(() => {
     if (confirmando && confirmacaoRef.current) {
       setTimeout(() => {
@@ -79,52 +76,35 @@ export default function OperadorPage() {
     }
   }, [confirmando]);
 
-  // ─── Carregar atividades + tentar recuperar sessão ────────────────────────
+  // ─── Carregar atividades ──────────────────────────────────────────────────
   async function loadActivities(profile: any) {
     const { data } = await supabase
       .from("activity_catalog")
       .select("id, nome, categoria, setor, impacto")
       .order("nome", { ascending: true });
-
-    if (data) {
-      setActivities(data);
-      tentarRecuperarSessao(data);
-    }
+    if (data) { setActivities(data); tentarRecuperarSessao(data); }
   }
 
   function tentarRecuperarSessao(lista: any[]) {
     try {
       const raw = localStorage.getItem(SESSAO_KEY);
       if (!raw) return;
-
       const sessao: SessaoSalva = JSON.parse(raw);
       const atividadeExiste = lista.find((a) => a.id === sessao.atividadeId);
-      if (!atividadeExiste) {
-        localStorage.removeItem(SESSAO_KEY);
-        return;
-      }
-
+      if (!atividadeExiste) { localStorage.removeItem(SESSAO_KEY); return; }
       const inicioRecuperado = new Date(sessao.inicio);
       const agora = new Date();
       const diffHoras = (agora.getTime() - inicioRecuperado.getTime()) / 3600000;
-
-      // Ignora sessões com mais de 12h (provavelmente esquecida)
-      if (diffHoras > 12) {
-        localStorage.removeItem(SESSAO_KEY);
-        return;
-      }
-
+      if (diffHoras > 12) { localStorage.removeItem(SESSAO_KEY); return; }
       setSelectedActivity(sessao.atividadeId);
       setSelectedActivityNome(sessao.atividadeNome);
       setInicio(inicioRecuperado);
       setTempo(Math.floor((agora.getTime() - inicioRecuperado.getTime()) / 1000));
       setSessaoRecuperada(true);
-    } catch {
-      localStorage.removeItem(SESSAO_KEY);
-    }
+    } catch { localStorage.removeItem(SESSAO_KEY); }
   }
 
-  // ─── Cronômetro ──────────────────────────────────────────────────────────
+  // ─── Cronômetro ───────────────────────────────────────────────────────────
   useEffect(() => {
     let interval: any;
     if (inicio && !confirmando) {
@@ -135,12 +115,11 @@ export default function OperadorPage() {
     return () => clearInterval(interval);
   }, [inicio, confirmando]);
 
-  // ─── Histórico ───────────────────────────────────────────────────────────
+  // ─── Histórico ────────────────────────────────────────────────────────────
   async function loadHistorico(userId: string) {
     const hoje = new Date();
     const inicioDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 0, 0, 0);
     const fimDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 23, 59, 59);
-
     const { data } = await supabase
       .from("activity_logs")
       .select("*")
@@ -148,11 +127,10 @@ export default function OperadorPage() {
       .gte("inicio", inicioDia.toISOString())
       .lte("inicio", fimDia.toISOString())
       .order("inicio", { ascending: false });
-
     if (data) setHistorico(data);
   }
 
-  // ─── Ações ───────────────────────────────────────────────────────────────
+  // ─── Ações ────────────────────────────────────────────────────────────────
   function selecionarAtividade(a: any) {
     setSelectedActivity(a.id);
     setSelectedActivityNome(a.nome);
@@ -161,11 +139,7 @@ export default function OperadorPage() {
   }
 
   function iniciar() {
-    if (!selectedActivity) {
-      alert("Selecione uma atividade.");
-      return;
-    }
-
+    if (!selectedActivity) { alert("Selecione uma atividade."); return; }
     const agora = new Date();
     setInicio(agora);
     setTempo(0);
@@ -173,14 +147,11 @@ export default function OperadorPage() {
     setAjusteManual(false);
     setMinutosManuais("");
     setSessaoRecuperada(false);
-
-    // Salvar sessão no localStorage
-    const sessao: SessaoSalva = {
+    localStorage.setItem(SESSAO_KEY, JSON.stringify({
       atividadeId: selectedActivity,
       atividadeNome: selectedActivityNome,
       inicio: agora.toISOString(),
-    };
-    localStorage.setItem(SESSAO_KEY, JSON.stringify(sessao));
+    }));
   }
 
   function abrirConfirmacao() {
@@ -191,19 +162,12 @@ export default function OperadorPage() {
 
   async function salvarAtividade() {
     if (!inicio || !user) return;
-
     const fim = new Date();
     const minutosCalculados = Math.max(1, Math.ceil((fim.getTime() - inicio.getTime()) / 60000));
     const minutosFinal = ajusteManual ? Number(minutosManuais) : minutosCalculados;
-
-    if (!minutosFinal || minutosFinal < 1) {
-      alert("Informe um tempo válido.");
-      return;
-    }
-
+    if (!minutosFinal || minutosFinal < 1) { alert("Informe um tempo válido."); return; }
     const atividade = activities.find((a) => a.id === selectedActivity);
     if (!atividade) { alert("Atividade não encontrada."); return; }
-
     const { error } = await supabase.from("activity_logs").insert([{
       operator_id: user.id,
       atividade_nome: atividade.nome,
@@ -218,32 +182,23 @@ export default function OperadorPage() {
       manual_adjusted: ajusteManual,
       session_id: crypto.randomUUID(),
     }]);
-
     if (error) { alert("Erro ao salvar: " + error.message); return; }
-
     localStorage.removeItem(SESSAO_KEY);
     resetar();
     await loadHistorico(user.id);
   }
 
   function resetar() {
-    setInicio(null);
-    setTempo(0);
-    setSelectedActivity("");
-    setSelectedActivityNome("");
-    setBusca("");
-    setConfirmando(false);
-    setAjusteManual(false);
-    setMinutosManuais("");
+    setInicio(null); setTempo(0);
+    setSelectedActivity(""); setSelectedActivityNome("");
+    setBusca(""); setConfirmando(false);
+    setAjusteManual(false); setMinutosManuais("");
     setSessaoRecuperada(false);
   }
 
-  function cancelarAtividade() {
-    localStorage.removeItem(SESSAO_KEY);
-    resetar();
-  }
+  function cancelarAtividade() { localStorage.removeItem(SESSAO_KEY); resetar(); }
 
-  // ─── Formatação ──────────────────────────────────────────────────────────
+  // ─── Formatação ───────────────────────────────────────────────────────────
   function formatarTempo(s: number) {
     const h = Math.floor(s / 3600);
     const m = Math.floor((s % 3600) / 60);
@@ -256,49 +211,63 @@ export default function OperadorPage() {
   }
 
   const minutosCalculados = Math.max(1, Math.ceil(tempo / 60));
-
   const atividadesFiltradas = activities.filter((a) =>
     a.nome.toLowerCase().includes(busca.toLowerCase())
   );
 
-  // ─── Render ──────────────────────────────────────────────────────────────
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <main className="roto-page pb-10">
-      <div className="mx-auto max-w-md">
+    <div className="roto-page">
 
-        {/* Header */}
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <p className="roto-muted">Painel do Operador</p>
-            <h1 style={{fontFamily:"'Barlow Condensed',sans-serif", fontSize:"clamp(32px,6vw,52px)", fontWeight:900, letterSpacing:"0.04em", textTransform:"uppercase", margin:0, lineHeight:1.1}}>
-              {user?.nome || "Operador"}
-            </h1>
-          </div>
+      {/* ── Header ── */}
+      <header className="roto-header">
+        <RotoLogo />
+        <div className="roto-header-user">
+          <span className="roto-header-name">{user?.nome || "Operador"}</span>
           <button
             onClick={() => { localStorage.removeItem("user"); router.replace("/login"); }}
             className="roto-button-secondary"
+            style={{ padding: "6px 14px", fontSize: 12 }}
           >
             Sair
           </button>
         </div>
+      </header>
 
-        {/* Aviso de sessão recuperada */}
+      {/* ── Conteúdo ── */}
+      <main style={{ maxWidth: 480, margin: "0 auto", padding: "20px 16px 48px" }}>
+
+        {/* Painel label */}
+        <div style={{ marginBottom: 16 }}>
+          <p className="roto-label">Painel do Operador</p>
+          <h1 className="roto-title" style={{ fontSize: "clamp(22px,5vw,30px)", marginTop: 4 }}>
+            {user?.nome || "Operador"}
+          </h1>
+        </div>
+
+        {/* Sessão recuperada */}
         {sessaoRecuperada && inicio && (
-          <div className="roto-card mb-4" style={{ borderColor: "var(--roto-red)", borderLeftWidth:"3px" }}>
-            <p className="text-sm font-bold" style={{color:"var(--roto-red)", fontFamily:"'Barlow Condensed',sans-serif", letterSpacing:"0.08em", textTransform:"uppercase"}}>⚡ Sessão recuperada</p>
-            <p className="roto-muted mt-1" style={{fontSize:"12px"}}>
-              Cronômetro retomado desde {formatarHora(inicio.toISOString())}. Use ajuste manual se o tempo estiver errado.
-            </p>
+          <div className="roto-card-red" style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 18 }}>⚡</span>
+              <div>
+                <p style={{ fontWeight: 700, fontSize: 13, color: "var(--roto-red)", margin: 0 }}>
+                  Sessão recuperada
+                </p>
+                <p className="roto-muted" style={{ marginTop: 2 }}>
+                  Cronômetro retomado desde {formatarHora(inicio.toISOString())}
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Estado: sem atividade em andamento */}
+        {/* ── Sem atividade ── */}
         {!inicio ? (
-          <div className="roto-card">
-            <label className="roto-muted">Selecione a atividade</label>
+          <div className="roto-card-primary">
+            <p className="roto-label" style={{ marginBottom: 12 }}>Selecione a atividade</p>
 
-            {/* Campo de busca com dropdown */}
-            <div className="relative mt-3" ref={dropdownRef}>
+            <div className="relative" ref={dropdownRef}>
               <input
                 ref={buscaRef}
                 type="text"
@@ -312,33 +281,39 @@ export default function OperadorPage() {
 
               {dropdownAberto && (
                 <div
-                  className="absolute z-50 w-full mt-1 shadow-xl"
+                  className="absolute w-full mt-1 z-50"
                   style={{
-                    background: "var(--bg-card)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "4px",
-                    boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
-                    maxHeight: "55dvh",
+                    background: "#fff",
+                    border: "1.5px solid var(--border-hi)",
+                    borderRadius: "var(--radius-sm)",
+                    boxShadow: "var(--shadow-md)",
+                    maxHeight: "52dvh",
                     overflowY: "auto",
                     WebkitOverflowScrolling: "touch",
                   }}
                 >
                   {atividadesFiltradas.length === 0 ? (
-                    <p className="px-4 py-3 text-sm roto-muted">Nenhuma atividade encontrada.</p>
+                    <p style={{ padding: "14px 16px", color: "var(--muted)", fontSize: 14 }}>
+                      Nenhuma atividade encontrada.
+                    </p>
                   ) : (
                     atividadesFiltradas.map((a) => (
                       <button
                         key={a.id}
                         onClick={() => selecionarAtividade(a)}
-                        className="w-full text-left px-4 border-none cursor-pointer transition-colors"
                         style={{
-                          background: a.id === selectedActivity ? "rgba(204,0,0,0.08)" : "transparent",
-                          color: a.id === selectedActivity ? "var(--roto-red)" : "var(--text)",
+                          display: "block",
+                          width: "100%",
+                          textAlign: "left",
+                          padding: "13px 16px",
+                          border: "none",
                           borderBottom: "1px solid var(--border)",
+                          background: a.id === selectedActivity ? "var(--primary-light)" : "transparent",
+                          color: a.id === selectedActivity ? "var(--primary)" : "var(--text)",
                           fontFamily: "'Inter', sans-serif",
-                          fontSize: 17,
-                          fontWeight: a.id === selectedActivity ? 700 : 500,
-                          padding: "14px 16px",
+                          fontSize: 15,
+                          fontWeight: a.id === selectedActivity ? 700 : 400,
+                          cursor: "pointer",
                         }}
                       >
                         {a.nome}
@@ -349,144 +324,207 @@ export default function OperadorPage() {
               )}
             </div>
 
-            {/* Atividade selecionada */}
             {selectedActivityNome && !dropdownAberto && (
-              <div className="mt-3 flex items-center gap-2 px-3 py-3" style={{background:"rgba(204,0,0,0.07)", borderLeft:"3px solid var(--roto-red)", borderRadius:"2px"}}>
-                <span style={{color:"var(--roto-red)"}}>▶</span>
-                <span style={{color:"var(--roto-red)", fontSize:17, fontWeight:700}}>{selectedActivityNome}</span>
+              <div style={{
+                marginTop: 12,
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "12px 14px",
+                background: "var(--primary-light)",
+                borderRadius: "var(--radius-sm)",
+                border: "1px solid rgba(0,119,182,0.2)",
+              }}>
+                <span style={{ color: "var(--primary)", fontSize: 16 }}>✔</span>
+                <span style={{ color: "var(--primary)", fontSize: 14, fontWeight: 600 }}>
+                  {selectedActivityNome}
+                </span>
               </div>
             )}
 
             <button
               onClick={iniciar}
               disabled={!selectedActivity}
-              className="roto-button mt-5"
-              style={!selectedActivity ? { opacity: 0.4, cursor: "not-allowed" } : {}}
+              className="roto-button-cta"
+              style={{ marginTop: 16 }}
             >
               ▶ Iniciar atividade
             </button>
           </div>
 
         ) : (
-          /* Estado: atividade em andamento */
           <>
-            <div className="roto-card text-center">
-              <p className="roto-muted">Em andamento</p>
+            {/* ── Em andamento ── */}
+            <div className="roto-card-teal" style={{ textAlign: "center" }}>
+              <span className="roto-badge roto-badge-teal" style={{ marginBottom: 8 }}>
+                ● Em andamento
+              </span>
 
-              <p className="mt-3 px-2 leading-snug"
-                style={{fontFamily:"'Barlow Condensed',sans-serif", fontSize:"22px", fontWeight:800, color:"var(--roto-red)", textTransform:"uppercase", letterSpacing:"0.06em"}}>
+              <p style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 15,
+                fontWeight: 600,
+                color: "var(--text-secondary)",
+                marginTop: 8,
+                marginBottom: 4,
+              }}>
                 {selectedActivityNome}
               </p>
 
-              <div style={{height:"1px", background:"var(--border)", margin:"16px 0"}} />
+              <div style={{ height: 1, background: "var(--border)", margin: "14px 0" }} />
 
-              <p className="tabular-nums leading-none"
-                style={{fontFamily:"'Barlow Condensed',sans-serif", fontSize:"80px", fontWeight:900, letterSpacing:"-0.02em", color: confirmando ? "var(--muted)" : "var(--text)", margin:"12px 0 20px", opacity: confirmando ? 0.4 : 1}}>
+              <p style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontSize: "clamp(64px, 20vw, 88px)",
+                fontWeight: 900,
+                letterSpacing: "-0.02em",
+                color: confirmando ? "var(--muted)" : "var(--primary)",
+                margin: "8px 0 16px",
+                opacity: confirmando ? 0.4 : 1,
+                lineHeight: 1,
+              }}>
                 {formatarTempo(tempo)}
               </p>
 
               {!confirmando && (
-                <>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   <button onClick={abrirConfirmacao} className="roto-button-danger">
-                    ⏹ Finalizar
+                    ⏹ Finalizar atividade
                   </button>
-                  <button onClick={cancelarAtividade} className="roto-button-secondary mt-3 w-full">
-                    Cancelar atividade
+                  <button onClick={cancelarAtividade} className="roto-button-secondary" style={{ width: "100%" }}>
+                    Cancelar
                   </button>
-                </>
+                </div>
               )}
             </div>
 
-            {/* Card de confirmação aparece ABAIXO do timer */}
+            {/* ── Confirmação (abaixo do timer) ── */}
             {confirmando && (
-              <div ref={confirmacaoRef} className="roto-card mt-4">
-                <p className="roto-muted">Confirmar finalização</p>
-                <h2 className="mt-1 font-bold" style={{fontFamily:"'Barlow Condensed',sans-serif", fontSize:"20px", letterSpacing:"0.04em", textTransform:"uppercase"}}>
+              <div ref={confirmacaoRef} className="roto-card-primary" style={{ marginTop: 16 }}>
+                <p className="roto-label" style={{ marginBottom: 8 }}>Confirmar finalização</p>
+                <p style={{ fontWeight: 700, fontSize: 15, color: "var(--text)", marginBottom: 16 }}>
                   {selectedActivityNome}
-                </h2>
-
-                <p className="my-6 text-center tabular-nums" style={{fontFamily:"'Barlow Condensed',sans-serif", fontSize:"72px", fontWeight:900, color:"var(--roto-red)"}}>
-                  {minutosCalculados}<span style={{fontSize:"32px", fontWeight:600, color:"var(--muted)", marginLeft:"6px"}}>min</span>
                 </p>
 
-                <label className="flex items-center gap-3 rounded-xl p-4 cursor-pointer" style={{background:"rgba(255,255,255,0.06)", border:"1px solid var(--border)"}}>
+                {/* Tempo em destaque */}
+                <div style={{
+                  textAlign: "center",
+                  background: "var(--primary-light)",
+                  borderRadius: "var(--radius-md)",
+                  padding: "20px 16px",
+                  marginBottom: 16,
+                }}>
+                  <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 72, fontWeight: 900, color: "var(--primary)", margin: 0, lineHeight: 1 }}>
+                    {minutosCalculados}
+                  </p>
+                  <p style={{ color: "var(--muted)", fontSize: 13, marginTop: 4 }}>minutos registrados</p>
+                </div>
+
+                {/* Checkbox ajuste */}
+                <label style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 12,
+                  padding: "14px",
+                  background: "var(--bg)",
+                  borderRadius: "var(--radius-sm)",
+                  border: "1px solid var(--border)",
+                  cursor: "pointer",
+                  marginBottom: 12,
+                }}>
                   <input
                     type="checkbox"
                     checked={ajusteManual}
                     onChange={(e) => setAjusteManual(e.target.checked)}
+                    style={{ marginTop: 2, accentColor: "var(--primary)" }}
                   />
-                  <span className="text-sm">Esqueci o celular / ajustar tempo manual</span>
+                  <span style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                    Esqueci o celular / ajustar tempo manualmente
+                  </span>
                 </label>
 
                 {ajusteManual && (
-                  <div className="mt-4">
-                    <label className="text-sm roto-muted">Tempo real gasto (minutos)</label>
+                  <div style={{ marginBottom: 12 }}>
+                    <label className="roto-label" style={{ marginBottom: 6, display: "block" }}>
+                      Tempo real gasto (minutos)
+                    </label>
                     <input
                       type="number"
                       min="1"
                       max="720"
                       value={minutosManuais}
                       onChange={(e) => setMinutosManuais(e.target.value)}
-                      className="roto-input mt-2"
+                      className="roto-input"
                     />
                   </div>
                 )}
 
-                <button onClick={salvarAtividade} className="roto-button mt-6">
+                <button onClick={salvarAtividade} className="roto-button">
                   ✓ Salvar atividade
                 </button>
-
                 <button
                   onClick={() => { setConfirmando(false); setAjusteManual(false); }}
-                  className="roto-button-secondary mt-3 w-full"
+                  className="roto-button-secondary"
+                  style={{ width: "100%", marginTop: 10 }}
                 >
-                  Continuar atividade
+                  ← Continuar atividade
                 </button>
               </div>
             )}
           </>
         )}
 
-        {/* Histórico do dia */}
-        <button
-          onClick={() => setMostrarHistorico(!mostrarHistorico)}
-          className="roto-button-secondary mt-6 w-full"
-        >
-          {mostrarHistorico
-            ? "Ocultar histórico de hoje"
-            : `Ver histórico de hoje (${historico.length})`}
-        </button>
+        {/* ── Histórico ── */}
+        <div style={{ marginTop: 20 }}>
+          <button
+            onClick={() => setMostrarHistorico(!mostrarHistorico)}
+            className="roto-button-secondary"
+            style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" }}
+          >
+            <span>Histórico de hoje ({historico.length})</span>
+            <span>{mostrarHistorico ? "▲" : "▼"}</span>
+          </button>
 
-        {mostrarHistorico && (
-          <div className="roto-card mt-4">
-            <p className="font-bold">Histórico de hoje</p>
-
-            {historico.length === 0 ? (
-              <p className="roto-muted mt-3 text-sm">Nenhuma atividade registrada hoje.</p>
-            ) : (
-              <div className="mt-4 max-h-80 space-y-3 overflow-y-auto pr-1">
-                {historico.map((item) => (
-                  <div
-                    key={item.id}
-                    className="border-b border-gray-200 pb-3 last:border-b-0"
-                  >
-                    <p className="font-bold">{item.atividade_nome}</p>
-                    <p className="text-sm roto-muted">
-                      {formatarHora(item.inicio)} até {formatarHora(item.fim)}
-                    </p>
-                    <p className="text-sm">
-                      {item.duration_minutes} min
-                      {item.manual_adjusted && " • ajuste manual"}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-
-    </main>
+          {mostrarHistorico && (
+            <div className="roto-card" style={{ marginTop: 10 }}>
+              {historico.length === 0 ? (
+                <p className="roto-muted" style={{ textAlign: "center", padding: "16px 0" }}>
+                  Nenhuma atividade registrada hoje.
+                </p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                  {historico.map((item, idx) => (
+                    <div
+                      key={item.id}
+                      style={{
+                        padding: "14px 0",
+                        borderBottom: idx < historico.length - 1 ? "1px solid var(--border)" : "none",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: 12,
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontWeight: 600, fontSize: 14, margin: 0, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {item.atividade_nome}
+                        </p>
+                        <p className="roto-muted" style={{ marginTop: 2 }}>
+                          {formatarHora(item.inicio)} → {formatarHora(item.fim)}
+                          {item.manual_adjusted && " · ajuste manual"}
+                        </p>
+                      </div>
+                      <span className="roto-badge roto-badge-primary" style={{ flexShrink: 0 }}>
+                        {item.duration_minutes} min
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
   );
 }

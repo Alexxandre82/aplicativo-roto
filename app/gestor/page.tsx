@@ -11,7 +11,17 @@ import {
 
 type Periodo = "dia" | "semana" | "mes";
 
-const CORES = ["#CC0000","#e63329","#ff6b6b","#990000","#ff9999","#660000","#ffb3b3","#330000"];
+// Nova paleta azul/teal/laranja alinhada ao redesign
+const CORES = ["#0077B6","#0096C7","#00B4D8","#F77F00","#F4A261","#CC0000","#48CAE4","#ADE8F4"];
+
+const TT = {
+  background: "#fff",
+  border: "1px solid var(--border)",
+  borderRadius: 8,
+  fontFamily: "'Inter', sans-serif",
+  fontSize: 13,
+  boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+};
 
 function getIntervalo(periodo: Periodo, dataBase: string) {
   const [ano, mes, dia] = dataBase.split("-").map(Number);
@@ -51,12 +61,43 @@ function PizzaLabel({cx,cy,midAngle,innerRadius,outerRadius,percent}: any) {
   const R = Math.PI/180, r = innerRadius+(outerRadius-innerRadius)*0.55;
   return <text x={cx+r*Math.cos(-midAngle*R)} y={cy+r*Math.sin(-midAngle*R)}
     fill="white" textAnchor="middle" dominantBaseline="central"
-    style={{fontSize:12,fontWeight:700,fontFamily:"'Barlow Condensed',sans-serif"}}>
+    style={{fontSize:12,fontWeight:700,fontFamily:"'Inter',sans-serif"}}>
     {Math.round(percent*100)}%
   </text>;
 }
 
-const TT = { background:"var(--bg-card)", border:"1px solid var(--border)", borderRadius:4, fontFamily:"'Barlow',sans-serif", fontSize:13 };
+// ── KPI Card ──────────────────────────────────────────────────────────────────
+function KpiCard({ label, value, sub, color, icon }: {
+  label: string; value: string; sub?: string; color: string; icon: string;
+}) {
+  return (
+    <div style={{
+      background: "#fff",
+      border: "1px solid var(--border)",
+      borderTop: `3px solid ${color}`,
+      borderRadius: "var(--radius-md)",
+      padding: "18px 20px",
+      boxShadow: "var(--shadow-sm)",
+      display: "flex",
+      flexDirection: "column",
+      gap: 4,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        <span style={{ fontSize: 20 }}>{icon}</span>
+        <p className="roto-label">{label}</p>
+      </div>
+      <p style={{
+        fontFamily: "'Barlow Condensed', sans-serif",
+        fontSize: "clamp(28px, 4vw, 40px)",
+        fontWeight: 900,
+        color,
+        margin: 0,
+        lineHeight: 1,
+      }}>{value}</p>
+      {sub && <p className="roto-muted" style={{ marginTop: 4 }}>{sub}</p>}
+    </div>
+  );
+}
 
 export default function GestorPage() {
   const router = useRouter();
@@ -128,100 +169,160 @@ export default function GestorPage() {
   const top = atividades[0];
   const pctTop = totalMin>0&&top ? Math.round((top.minutos/totalMin)*100) : 0;
 
-  return (
-    <main className="roto-page pb-10" style={{maxWidth:"100%"}}>
+  const pctColor = pct>30 ? "var(--roto-red)" : pct>15 ? "var(--warning)" : "var(--success)";
 
-      {/* ── HEADER ── */}
-      <div style={{maxWidth:1400,margin:"0 auto"}}>
-        <div className="mb-6 flex justify-between items-center">
+  return (
+    <div className="roto-page">
+
+      {/* ── Header ── */}
+      <header className="roto-header">
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span className="roto-header-logo-badge">ROTO</span>
+          <span className="roto-header-title">CD Fermax · Gestão</span>
+        </div>
+        <button
+          onClick={() => { localStorage.removeItem("user"); router.replace("/login"); }}
+          className="roto-button-secondary"
+          style={{ padding: "6px 14px", fontSize: 12 }}
+        >
+          Sair
+        </button>
+      </header>
+
+      {/* ── Conteúdo ── */}
+      <main style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 20px 48px" }}>
+
+        {/* Título + filtros */}
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-end", gap: 16, marginBottom: 24 }}>
           <div>
-            <p className="roto-muted">CD Fermax</p>
-            <h1 style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:"clamp(28px,4vw,48px)",fontWeight:900,letterSpacing:"0.04em",textTransform:"uppercase",margin:0,lineHeight:1}}>
+            <p className="roto-label">Dashboard</p>
+            <h1 className="roto-title" style={{ fontSize: "clamp(22px,4vw,34px)", marginTop: 4 }}>
               Trabalho Invisível
             </h1>
           </div>
-          <button onClick={()=>{localStorage.removeItem("user");router.replace("/login");}} className="roto-button-secondary">Sair</button>
-        </div>
 
-        {/* ── FILTROS ── */}
-        <div className="roto-card mb-6" style={{display:"flex",gap:12,alignItems:"center",flexWrap:"wrap"}}>
-          <div style={{display:"flex",gap:8,flex:1,minWidth:240}}>
-            {(["dia","semana","mes"] as Periodo[]).map(p=>(
-              <button key={p} onClick={()=>mudarPeriodo(p)} style={{
-                flex:1,padding:"12px 8px",border:periodo===p?"2px solid var(--roto-red)":"1px solid var(--border)",
-                background:periodo===p?"var(--roto-red-bg)":"transparent",
-                color:periodo===p?"var(--roto-red)":"#444444",
-                fontFamily:"'Barlow Condensed',sans-serif",fontSize:16,fontWeight:800,
-                letterSpacing:"0.1em",textTransform:"uppercase",cursor:"pointer",borderRadius:4,
-              }}>
-                {p==="dia"?"Dia":p==="semana"?"Semana":"Mês"}
-              </button>
-            ))}
+          {/* Filtros */}
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <div style={{ display: "flex", background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", overflow: "hidden" }}>
+              {(["dia","semana","mes"] as Periodo[]).map(p => (
+                <button
+                  key={p}
+                  onClick={() => mudarPeriodo(p)}
+                  style={{
+                    padding: "9px 18px",
+                    border: "none",
+                    background: periodo === p ? "var(--primary)" : "transparent",
+                    color: periodo === p ? "#fff" : "var(--text-secondary)",
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    letterSpacing: "0.04em",
+                    transition: "background 0.15s, color 0.15s",
+                  }}
+                >
+                  {p === "dia" ? "Dia" : p === "semana" ? "Semana" : "Mês"}
+                </button>
+              ))}
+            </div>
+            <input
+              type="date"
+              value={dataFiltro}
+              onChange={e => mudarData(e.target.value)}
+              className="roto-input"
+              style={{ maxWidth: 180, margin: 0 }}
+            />
           </div>
-          <input type="date" value={dataFiltro} onChange={e=>mudarData(e.target.value)}
-            className="roto-input" style={{maxWidth:200,margin:0}} />
         </div>
 
         {loading ? (
-          <div className="roto-card text-center py-16">
-            <p className="roto-muted" style={{fontSize:16}}>Carregando dados...</p>
+          <div style={{ textAlign: "center", padding: "80px 0" }}>
+            <div style={{
+              width: 40, height: 40, border: "3px solid var(--border)",
+              borderTopColor: "var(--primary)", borderRadius: "50%",
+              animation: "spin 0.8s linear infinite", margin: "0 auto 16px",
+            }} />
+            <p className="roto-muted" style={{ fontSize: 15 }}>Carregando dados...</p>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           </div>
         ) : (
           <>
             {/* ── KPIs ── */}
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:16,marginBottom:24}}>
-              {/* Disponível */}
-              <div className="roto-card text-center" style={{borderTop:"3px solid var(--border-hi)"}}>
-                <p className="roto-muted" style={{fontSize:14}}>Mão de obra disponível</p>
-                <p style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:"clamp(32px,4vw,52px)",fontWeight:900,margin:"8px 0 0",lineHeight:1}}>{formatMin(capacidade)}</p>
-                {diasAtivos>1&&<p style={{fontSize:13,color:"var(--muted)",marginTop:4}}>{diasAtivos} dias</p>}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 24 }}>
+              <KpiCard
+                icon="👥"
+                label="Mão de obra disponível"
+                value={formatMin(capacidade)}
+                sub={diasAtivos > 1 ? `${diasAtivos} dias` : undefined}
+                color="var(--primary)"
+              />
+              <KpiCard
+                icon="⏱"
+                label="Tempo invisível"
+                value={formatMin(totalMin)}
+                color="var(--roto-red)"
+              />
+              <KpiCard
+                icon="📊"
+                label="% do tempo em invisível"
+                value={`${pct}%`}
+                sub={pct > 30 ? "⚠ Atenção: acima do esperado" : pct > 15 ? "Moderado" : "Dentro do esperado"}
+                color={pctColor}
+              />
+            </div>
+
+            {/* Barra de progresso */}
+            <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "16px 20px", marginBottom: 24, boxShadow: "var(--shadow-sm)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                <span className="roto-label">Ocupação do tempo disponível</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: pctColor }}>{pct}%</span>
               </div>
-              {/* Invisível */}
-              <div className="roto-card text-center" style={{borderTop:"3px solid var(--roto-red)"}}>
-                <p className="roto-muted" style={{fontSize:14}}>Tempo invisível</p>
-                <p style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:"clamp(32px,4vw,52px)",fontWeight:900,margin:"8px 0 0",lineHeight:1,color:"var(--roto-red)"}}>{formatMin(totalMin)}</p>
-              </div>
-              {/* Percentual */}
-              <div className="roto-card text-center" style={{borderTop:`3px solid ${pct>30?"var(--danger)":pct>15?"#d97706":"var(--roto-red)"}`}}>
-                <p className="roto-muted" style={{fontSize:14}}>% do tempo em invisível</p>
-                <p style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:"clamp(32px,4vw,52px)",fontWeight:900,margin:"8px 0 0",lineHeight:1,color:pct>30?"var(--danger)":pct>15?"#d97706":"var(--roto-red)"}}>{pct}%</p>
-                <div style={{height:6,background:"var(--border)",borderRadius:2,marginTop:12,overflow:"hidden"}}>
-                  <div style={{height:"100%",width:`${Math.min(pct,100)}%`,background:pct>30?"var(--danger)":pct>15?"#d97706":"var(--roto-red)",transition:"width 0.5s"}}/>
-                </div>
+              <div style={{ height: 8, background: "var(--bg)", borderRadius: 4, overflow: "hidden" }}>
+                <div style={{
+                  height: "100%",
+                  width: `${Math.min(pct, 100)}%`,
+                  background: pctColor,
+                  borderRadius: 4,
+                  transition: "width 0.6s ease",
+                }} />
               </div>
             </div>
 
-            {/* Alerta */}
-            {top&&pctTop>=40&&(
-              <div className="roto-card mb-6" style={{borderLeft:"4px solid var(--danger)",borderTop:"1px solid var(--border)"}}>
-                <p style={{color:"var(--danger)",fontFamily:"'Barlow Condensed',sans-serif",fontSize:16,fontWeight:800,letterSpacing:"0.08em",textTransform:"uppercase"}}>⚠ Gargalo detectado</p>
-                <p style={{fontSize:15,marginTop:4}}><strong>{top.nome}</strong> representa <strong>{pctTop}%</strong> do tempo invisível no período.</p>
+            {/* Alerta gargalo */}
+            {top && pctTop >= 40 && (
+              <div className="roto-card-red" style={{ marginBottom: 24 }}>
+                <p style={{ color: "var(--roto-red)", fontWeight: 700, fontSize: 14, marginBottom: 4 }}>
+                  ⚠ Gargalo detectado
+                </p>
+                <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
+                  <strong>{top.nome}</strong> representa <strong>{pctTop}%</strong> do tempo invisível no período.
+                </p>
               </div>
             )}
 
-            {/* ── GRÁFICOS 2 COLUNAS ── */}
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(340px,1fr))",gap:20,marginBottom:20}}>
+            {/* ── Gráficos ── */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 20, marginBottom: 24 }}>
 
               {/* Pizza */}
-              {atividades.length>0&&(
-                <div className="roto-card">
-                  <p className="roto-muted" style={{fontSize:14,marginBottom:16}}>Proporção por atividade</p>
-                  <div style={{width:"100%",height:260}}>
+              {atividades.length > 0 && (
+                <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 20, boxShadow: "var(--shadow-sm)" }}>
+                  <p className="roto-label" style={{ marginBottom: 16 }}>Proporção por atividade</p>
+                  <div style={{ width: "100%", height: 240 }}>
                     <ResponsiveContainer>
                       <PieChart>
                         <Pie data={atividades} dataKey="minutos" nameKey="nome" cx="50%" cy="50%" outerRadius={100} labelLine={false} label={PizzaLabel}>
-                          {atividades.map((_,i)=><Cell key={i} fill={CORES[i%CORES.length]}/>)}
+                          {atividades.map((_,i) => <Cell key={i} fill={CORES[i%CORES.length]}/>)}
                         </Pie>
-                        <Tooltip formatter={(v)=>[`${v} min`]} contentStyle={TT}/>
+                        <Tooltip formatter={(v) => [`${v} min`]} contentStyle={TT}/>
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                  <div style={{marginTop:12,display:"flex",flexDirection:"column",gap:8}}>
-                    {atividades.map((a,i)=>(
-                      <div key={a.nome} style={{display:"flex",alignItems:"center",gap:8,fontSize:14}}>
-                        <div style={{width:10,height:10,background:CORES[i%CORES.length],flexShrink:0,borderRadius:2}}/>
-                        <span style={{color:"var(--text-secondary)",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.nome}</span>
-                        <span style={{fontWeight:700,flexShrink:0}}>{a.minutos} min</span>
+                  <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
+                    {atividades.slice(0,6).map((a,i) => (
+                      <div key={a.nome} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+                        <div style={{ width: 10, height: 10, background: CORES[i%CORES.length], flexShrink: 0, borderRadius: 2 }}/>
+                        <span style={{ color: "var(--text-secondary)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.nome}</span>
+                        <span style={{ fontWeight: 700, flexShrink: 0, color: "var(--text)" }}>{a.minutos} min</span>
                       </div>
                     ))}
                   </div>
@@ -229,16 +330,16 @@ export default function GestorPage() {
               )}
 
               {/* Barra horizontal */}
-              {atividades.length>0&&(
-                <div className="roto-card">
-                  <p className="roto-muted" style={{fontSize:14,marginBottom:16}}>Minutos por atividade</p>
-                  <div style={{width:"100%",height:Math.max(220,atividades.length*44)}}>
+              {atividades.length > 0 && (
+                <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 20, boxShadow: "var(--shadow-sm)" }}>
+                  <p className="roto-label" style={{ marginBottom: 16 }}>Minutos por atividade</p>
+                  <div style={{ width: "100%", height: Math.max(220, atividades.length * 44) }}>
                     <ResponsiveContainer>
                       <BarChart data={atividades} layout="vertical" margin={{left:0,right:20}}>
                         <XAxis type="number" tick={{fill:"var(--muted)",fontSize:12}}/>
-                        <YAxis type="category" dataKey="nome" width={130} tick={{fill:"var(--text-secondary)",fontSize:13}}/>
-                        <Tooltip formatter={(v)=>[`${v} min`,"Tempo"]} contentStyle={TT}/>
-                        <Bar dataKey="minutos" fill="var(--roto-red)" radius={[0,4,4,0]}/>
+                        <YAxis type="category" dataKey="nome" width={130} tick={{fill:"var(--text-secondary)",fontSize:12}}/>
+                        <Tooltip formatter={(v) => [`${v} min`,"Tempo"]} contentStyle={TT}/>
+                        <Bar dataKey="minutos" fill="var(--primary)" radius={[0,6,6,0]}/>
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -246,37 +347,37 @@ export default function GestorPage() {
               )}
 
               {/* Tendência total */}
-              <div className="roto-card">
-                <p className="roto-muted" style={{fontSize:14,marginBottom:16}}>Tendência total — 7 dias</p>
-                <div style={{width:"100%",height:260}}>
+              <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 20, boxShadow: "var(--shadow-sm)" }}>
+                <p className="roto-label" style={{ marginBottom: 16 }}>Tendência total — 7 dias</p>
+                <div style={{ width: "100%", height: 240 }}>
                   <ResponsiveContainer>
                     <LineChart data={tendencia}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)"/>
                       <XAxis dataKey="dia" tick={{fill:"var(--muted)",fontSize:12}}/>
                       <YAxis tick={{fill:"var(--muted)",fontSize:12}}/>
-                      <Tooltip formatter={(v)=>[`${v} min`]} contentStyle={TT}/>
-                      <Legend wrapperStyle={{fontSize:13,fontFamily:"'Barlow Condensed',sans-serif"}}/>
+                      <Tooltip formatter={(v) => [`${v} min`]} contentStyle={TT}/>
+                      <Legend wrapperStyle={{fontSize:13,fontFamily:"'Inter',sans-serif"}}/>
                       <Line type="monotone" dataKey="capacidade" stroke="var(--border-hi)" strokeDasharray="4 4" name="Capacidade/dia" dot={false}/>
-                      <Line type="monotone" dataKey="minutos" stroke="var(--roto-red)" strokeWidth={2} name="Invisível" dot={{fill:"var(--roto-red)",r:4}}/>
+                      <Line type="monotone" dataKey="minutos" stroke="var(--primary)" strokeWidth={2.5} name="Invisível" dot={{fill:"var(--primary)",r:4}}/>
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
               </div>
 
               {/* Evolução por atividade */}
-              {ativsUnicas.length>0&&(
-                <div className="roto-card">
-                  <p className="roto-muted" style={{fontSize:14,marginBottom:16}}>Evolução por atividade — 7 dias</p>
-                  <div style={{width:"100%",height:260}}>
+              {ativsUnicas.length > 0 && (
+                <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 20, boxShadow: "var(--shadow-sm)" }}>
+                  <p className="roto-label" style={{ marginBottom: 16 }}>Evolução por atividade — 7 dias</p>
+                  <div style={{ width: "100%", height: 240 }}>
                     <ResponsiveContainer>
                       <LineChart data={evolucao}>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)"/>
                         <XAxis dataKey="dia" tick={{fill:"var(--muted)",fontSize:12}}/>
                         <YAxis tick={{fill:"var(--muted)",fontSize:12}}/>
-                        <Tooltip formatter={(v)=>[`${v} min`]} contentStyle={TT}/>
-                        <Legend wrapperStyle={{fontSize:12,fontFamily:"'Barlow Condensed',sans-serif"}}
+                        <Tooltip formatter={(v) => [`${v} min`]} contentStyle={TT}/>
+                        <Legend wrapperStyle={{fontSize:12,fontFamily:"'Inter',sans-serif"}}
                           formatter={(v)=>v.length>16?v.slice(0,16)+"…":v}/>
-                        {ativsUnicas.map((nome,i)=>(
+                        {ativsUnicas.map((nome,i) => (
                           <Line key={nome} type="monotone" dataKey={nome}
                             stroke={CORES[i%CORES.length]} strokeWidth={2} connectNulls
                             dot={{fill:CORES[i%CORES.length],r:3}}/>
@@ -288,20 +389,43 @@ export default function GestorPage() {
               )}
             </div>
 
-            {atividades.length===0&&(
-              <div className="roto-card text-center py-12">
-                <p style={{color:"var(--muted)",fontSize:16}}>Nenhuma atividade registrada neste período.</p>
+            {/* Sem dados */}
+            {atividades.length === 0 && (
+              <div style={{ textAlign: "center", padding: "48px 24px", background: "#fff", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
+                <p style={{ fontSize: 36, marginBottom: 12 }}>📋</p>
+                <p style={{ color: "var(--muted)", fontSize: 15 }}>Nenhuma atividade registrada neste período.</p>
               </div>
             )}
 
-            {logs.length>0&&(
-              <button onClick={()=>exportarCSV(logs,`roto-invisivel-${periodo}-${dataFiltro}.csv`)} className="roto-button-secondary w-full" style={{fontSize:14,padding:"14px"}}>
+            {/* Exportar */}
+            {logs.length > 0 && (
+              <button
+                onClick={() => exportarCSV(logs, `roto-invisivel-${periodo}-${dataFiltro}.csv`)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "13px 20px",
+                  background: "#fff",
+                  border: "1.5px solid var(--primary)",
+                  borderRadius: "var(--radius-sm)",
+                  color: "var(--primary)",
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "background 0.15s",
+                  marginTop: 8,
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = "var(--primary-light)")}
+                onMouseLeave={e => (e.currentTarget.style.background = "#fff")}
+              >
                 ⬇ Exportar dados ({logs.length} registros) — CSV
               </button>
             )}
           </>
         )}
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

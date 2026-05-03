@@ -429,8 +429,8 @@ export default function OperadorPage() {
 
       {/* Modal de confirmação */}
       {confirmando && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto px-5 py-8" style={{background:"rgba(0,0,0,0.5)"}}>
-          <div className="roto-card w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto px-5 py-8" style={{background:"rgba(0,0,0,0.6)", WebkitOverflowScrolling: "touch"} as React.CSSProperties}>
+          <div className="roto-card w-full max-w-md" style={{marginTop: "auto", marginBottom: "auto"}}>
             <p className="roto-muted">Confirmar finalização</p>
             <h2 className="mt-1 font-bold" style={{fontFamily:"'Barlow Condensed',sans-serif", fontSize:"20px", letterSpacing:"0.04em", textTransform:"uppercase"}}>{selectedActivityNome}</h2>
 

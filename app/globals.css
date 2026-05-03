@@ -478,7 +478,7 @@ button, input, select, textarea {
   outline: none;
 }
 
-.login-form input::placeholder { color: rgba(255,255,255,0.35); }
+.login-form input::placeholder { color: rgba(255,255,255,0.7); }
 
 .login-form input:focus {
   border-color: var(--primary);
@@ -504,10 +504,15 @@ button, input, select, textarea {
   text-transform: uppercase;
   cursor: pointer;
   border-radius: 10px;
-  background: var(--primary);
+  background: rgba(0,150,199,0.75); /* Azul mais fraco/translúcido */
   color: white;
-  border: none;
-  box-shadow: 0 8px 24px rgba(0,119,182,0.4);
+  border: 1px solid rgba(0,150,199,0.5);
+  box-shadow: 0 8px 24px rgba(0,119,182,0.25);
+  transition: all 0.2s;
+}
+
+.login-primary:hover {
+  background: rgba(0,150,199,0.9);
 }
 
 .login-secondary {

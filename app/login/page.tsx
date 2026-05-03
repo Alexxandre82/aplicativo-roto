@@ -116,6 +116,16 @@ export default function LoginPage() {
     setCargaHoraria("501");
   }
 
+  function formatarMinutos(minStr: string) {
+    const min = Number(minStr);
+    if (!min || min < 1) return "";
+    if (min < 60) return `${min} min`;
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    if (m === 0) return `${h}h`;
+    return `${h}:${m.toString().padStart(2, "0")}hrs`;
+  }
+
   return (
     <main className="login-page">
       <div className="login-card">
@@ -138,16 +148,20 @@ export default function LoginPage() {
                 onChange={(e) => setNome(e.target.value)}
               />
               <div>
-                <label className="login-label">Carga horária diária (minutos)</label>
+                <label className="login-label" style={{ color: "#fff", fontSize: 13, fontWeight: 600, marginBottom: 6, display: "block" }}>
+                  Carga horária diária <span style={{ color: "var(--primary-light)", marginLeft: 6 }}>({formatarMinutos(cargaHoraria)})</span>
+                </label>
                 <input
                   type="number"
-                  placeholder="501"
+                  placeholder="Ex: 501"
                   value={cargaHoraria}
                   min="60"
                   max="720"
                   onChange={(e) => setCargaHoraria(e.target.value)}
                 />
-                <p className="login-hint-small">Turno completo = 501 min · Meio período = 240 min</p>
+                <p className="login-hint-small" style={{ color: "rgba(255,255,255,0.85)", fontSize: 11, marginTop: 6 }}>
+                  Turno completo = 501 min · Meio período = 240 min
+                </p>
               </div>
             </>
           )}

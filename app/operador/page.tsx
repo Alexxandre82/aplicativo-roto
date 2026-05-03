@@ -42,6 +42,9 @@ export default function OperadorPage() {
   // Sessão recuperada
   const [sessaoRecuperada, setSessaoRecuperada] = useState(false);
 
+  // Ref para scroll até a confirmação
+  const confirmacaoRef = useRef<HTMLDivElement>(null);
+
   // ─── Init ────────────────────────────────────────────────────────────────
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -66,6 +69,15 @@ export default function OperadorPage() {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  // Scroll automático até a confirmação
+  useEffect(() => {
+    if (confirmando && confirmacaoRef.current) {
+      setTimeout(() => {
+        confirmacaoRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    }
+  }, [confirmando]);
 
   // ─── Carregar atividades + tentar recuperar sessão ────────────────────────
   async function loadActivities(profile: any) {
@@ -355,81 +367,84 @@ export default function OperadorPage() {
             </button>
           </div>
 
-        ) : confirmando ? (
-          /* Estado: confirmando finalização (inline, sem fixed) */
-          <div className="roto-card">
-            <p className="roto-muted">Confirmar finalização</p>
-            <h2 className="mt-1 font-bold" style={{fontFamily:"'Barlow Condensed',sans-serif", fontSize:"20px", letterSpacing:"0.04em", textTransform:"uppercase"}}>
-              {selectedActivityNome}
-            </h2>
-
-            <p className="my-6 text-center tabular-nums" style={{fontFamily:"'Barlow Condensed',sans-serif", fontSize:"72px", fontWeight:900, color:"var(--roto-red)"}}>
-              {minutosCalculados}<span style={{fontSize:"32px", fontWeight:600, color:"var(--muted)", marginLeft:"6px"}}>min</span>
-            </p>
-
-            <label className="flex items-center gap-3 rounded-xl p-4 cursor-pointer" style={{background:"rgba(255,255,255,0.06)", border:"1px solid var(--border)"}}>
-              <input
-                type="checkbox"
-                checked={ajusteManual}
-                onChange={(e) => setAjusteManual(e.target.checked)}
-              />
-              <span className="text-sm">Esqueci o celular / ajustar tempo manual</span>
-            </label>
-
-            {ajusteManual && (
-              <div className="mt-4">
-                <label className="text-sm roto-muted">Tempo real gasto (minutos)</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="720"
-                  value={minutosManuais}
-                  onChange={(e) => setMinutosManuais(e.target.value)}
-                  className="roto-input mt-2"
-                />
-              </div>
-            )}
-
-            <button onClick={salvarAtividade} className="roto-button mt-6">
-              ✓ Salvar atividade
-            </button>
-
-            <button
-              onClick={() => { setConfirmando(false); setAjusteManual(false); }}
-              className="roto-button-secondary mt-3 w-full"
-            >
-              Continuar atividade
-            </button>
-          </div>
-
         ) : (
           /* Estado: atividade em andamento */
-          <div className="roto-card text-center">
-            <p className="roto-muted">Em andamento</p>
+          <>
+            <div className="roto-card text-center">
+              <p className="roto-muted">Em andamento</p>
 
-            <p className="mt-3 px-2 leading-snug"
-              style={{fontFamily:"'Barlow Condensed',sans-serif", fontSize:"22px", fontWeight:800, color:"var(--roto-red)", textTransform:"uppercase", letterSpacing:"0.06em"}}>
-              {selectedActivityNome}
-            </p>
+              <p className="mt-3 px-2 leading-snug"
+                style={{fontFamily:"'Barlow Condensed',sans-serif", fontSize:"22px", fontWeight:800, color:"var(--roto-red)", textTransform:"uppercase", letterSpacing:"0.06em"}}>
+                {selectedActivityNome}
+              </p>
 
-            <div style={{height:"1px", background:"var(--border)", margin:"16px 0"}} />
+              <div style={{height:"1px", background:"var(--border)", margin:"16px 0"}} />
 
-            <p className="tabular-nums leading-none"
-              style={{fontFamily:"'Barlow Condensed',sans-serif", fontSize:"80px", fontWeight:900, letterSpacing:"-0.02em", color:"var(--text)", margin:"12px 0 20px"}}>
-              {formatarTempo(tempo)}
-            </p>
+              <p className="tabular-nums leading-none"
+                style={{fontFamily:"'Barlow Condensed',sans-serif", fontSize:"80px", fontWeight:900, letterSpacing:"-0.02em", color: confirmando ? "var(--muted)" : "var(--text)", margin:"12px 0 20px", opacity: confirmando ? 0.4 : 1}}>
+                {formatarTempo(tempo)}
+              </p>
 
-            <button onClick={abrirConfirmacao} className="roto-button-danger">
-              ⏹ Finalizar
-            </button>
+              {!confirmando && (
+                <>
+                  <button onClick={abrirConfirmacao} className="roto-button-danger">
+                    ⏹ Finalizar
+                  </button>
+                  <button onClick={cancelarAtividade} className="roto-button-secondary mt-3 w-full">
+                    Cancelar atividade
+                  </button>
+                </>
+              )}
+            </div>
 
-            <button
-              onClick={cancelarAtividade}
-              className="roto-button-secondary mt-3 w-full"
-            >
-              Cancelar atividade
-            </button>
-          </div>
+            {/* Card de confirmação aparece ABAIXO do timer */}
+            {confirmando && (
+              <div ref={confirmacaoRef} className="roto-card mt-4">
+                <p className="roto-muted">Confirmar finalização</p>
+                <h2 className="mt-1 font-bold" style={{fontFamily:"'Barlow Condensed',sans-serif", fontSize:"20px", letterSpacing:"0.04em", textTransform:"uppercase"}}>
+                  {selectedActivityNome}
+                </h2>
+
+                <p className="my-6 text-center tabular-nums" style={{fontFamily:"'Barlow Condensed',sans-serif", fontSize:"72px", fontWeight:900, color:"var(--roto-red)"}}>
+                  {minutosCalculados}<span style={{fontSize:"32px", fontWeight:600, color:"var(--muted)", marginLeft:"6px"}}>min</span>
+                </p>
+
+                <label className="flex items-center gap-3 rounded-xl p-4 cursor-pointer" style={{background:"rgba(255,255,255,0.06)", border:"1px solid var(--border)"}}>
+                  <input
+                    type="checkbox"
+                    checked={ajusteManual}
+                    onChange={(e) => setAjusteManual(e.target.checked)}
+                  />
+                  <span className="text-sm">Esqueci o celular / ajustar tempo manual</span>
+                </label>
+
+                {ajusteManual && (
+                  <div className="mt-4">
+                    <label className="text-sm roto-muted">Tempo real gasto (minutos)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="720"
+                      value={minutosManuais}
+                      onChange={(e) => setMinutosManuais(e.target.value)}
+                      className="roto-input mt-2"
+                    />
+                  </div>
+                )}
+
+                <button onClick={salvarAtividade} className="roto-button mt-6">
+                  ✓ Salvar atividade
+                </button>
+
+                <button
+                  onClick={() => { setConfirmando(false); setAjusteManual(false); }}
+                  className="roto-button-secondary mt-3 w-full"
+                >
+                  Continuar atividade
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {/* Histórico do dia */}

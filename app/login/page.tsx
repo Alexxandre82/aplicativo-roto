@@ -152,7 +152,7 @@ export default function LoginPage() {
       return;
     }
 
-    const { error: profileError } = await supabase.from("profiles").upsert([
+    const { error: profileError } = await supabase.from("profiles").insert([
       {
         id: authData?.user?.id as string,
         nome: nomeFinal,

@@ -200,7 +200,7 @@ export default function GestorPage() {
           <span className="roto-header-title">Gestão</span>
         </div>
         <button
-          onClick={() => { localStorage.removeItem("user"); router.replace("/login"); }}
+          onClick={async () => { await supabase.auth.signOut(); localStorage.removeItem("user"); router.replace("/login"); }}
           className="roto-button-secondary"
           style={{ padding: "6px 14px", fontSize: 12, borderColor: "rgba(255,255,255,0.4)", color: "#fff", background: "rgba(255,255,255,0.15)" }}
         >

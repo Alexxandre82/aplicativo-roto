@@ -161,7 +161,8 @@ export default function GestorPage() {
     const allAtivs = new Set<string>();
     for (let i=6;i>=0;i--) {
       const d = new Date(); d.setDate(d.getDate()-i);
-      const {inicio:iD,fim:fD} = getIntervalo("dia",d.toISOString().split("T")[0]);
+      const dStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+      const {inicio:iD,fim:fD} = getIntervalo("dia",dStr);
       const {data: dL} = await supabase.from("activity_logs").select("duration_minutes,atividade_nome")
         .gte("inicio",iD.toISOString()).lte("inicio",fD.toISOString());
       const label = d.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit"});

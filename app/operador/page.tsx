@@ -363,6 +363,20 @@ export default function OperadorPage() {
     const [hStr, mStr] = editMinutos.split(":");
     const totalMinutos = (parseInt(hStr) || 0) * 60 + (parseInt(mStr) || 0);
     if (!totalMinutos || totalMinutos < 1) { alert("Informe um tempo válido."); return; }
+
+    // Verificar se ultrapassa a carga horária do dia
+    const outrosMin = historico.filter(h => h.id !== editandoId).reduce((a, h) => a + (h.duration_minutes || 0), 0);
+    const novoTotal = outrosMin + totalMinutos;
+    const limiteDia = user?.minutos_dia || 501;
+
+    if (novoTotal > limiteDia) {
+      const excesso = novoTotal - limiteDia;
+      const confirmado = confirm(
+        `⚠️ Atenção!\n\nCom este ajuste, o total do dia ficará em ${formatarMinutosExibicao(novoTotal)}, ultrapassando sua carga de ${formatarMinutosExibicao(limiteDia)} em ${formatarMinutosExibicao(excesso)}.\n\nDeseja salvar mesmo assim?`
+      );
+      if (!confirmado) return;
+    }
+
     try {
       const { error } = await supabase.from("activity_logs").update({
         duration_minutes: totalMinutos,
@@ -766,6 +780,21 @@ export default function OperadorPage() {
                               <button onClick={salvarEdicao} className="roto-button" style={{ padding: "8px 16px", width: "auto" }}>Salvar</button>
                               <button onClick={() => setEditandoId("")} className="roto-button-secondary" style={{ padding: "8px 12px", width: "auto" }}>✕</button>
                             </div>
+                            {(() => {
+                              const [hS, mS] = editMinutos.split(":");
+                              const editMin = (parseInt(hS) || 0) * 60 + (parseInt(mS) || 0);
+                              if (!editMin) return null;
+                              const outrosMin = historico.filter(h => h.id !== editandoId).reduce((a, h) => a + (h.duration_minutes || 0), 0);
+                              const novoTotal = outrosMin + editMin;
+                              const limite = user?.minutos_dia || 501;
+                              const excede = novoTotal > limite;
+                              return (
+                                <p style={{ fontSize: 12, marginTop: 8, fontWeight: 600, color: excede ? "var(--roto-red)" : "var(--muted)", display: "flex", alignItems: "center", gap: 4 }}>
+                                  {excede ? "⚠️" : "📊"} Total do dia: {formatarMinutosExibicao(novoTotal)} / {formatarMinutosExibicao(limite)}
+                                  {excede && <span style={{ color: "var(--roto-red)" }}> (+{formatarMinutosExibicao(novoTotal - limite)} acima)</span>}
+                                </p>
+                              );
+                            })()}
                           </div>
                         ) : (
                           <div style={{ display: "flex", gap: 12, marginTop: 8 }}>

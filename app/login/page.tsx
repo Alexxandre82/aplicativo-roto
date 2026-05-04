@@ -172,6 +172,7 @@ export default function LoginPage() {
 
     setErro("");
     setModoCadastro(false);
+    setLoading(false);
     setNome("");
     setMatricula("");
     setSenha("");

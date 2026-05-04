@@ -333,7 +333,7 @@ export default function GestorPage() {
                         <Pie data={atividades} dataKey="minutos" nameKey="nome" cx="50%" cy="50%" outerRadius={100} labelLine={false} label={PizzaLabel}>
                           {atividades.map((_,i) => <Cell key={i} fill={CORES[i%CORES.length]}/>)}
                         </Pie>
-                        <Tooltip formatter={(v) => [`${v} min`]} contentStyle={TT}/>
+                        <Tooltip formatter={(v) => [formatMin(Number(v))]} contentStyle={TT}/>
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
@@ -342,7 +342,7 @@ export default function GestorPage() {
                       <div key={a.nome} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
                         <div style={{ width: 10, height: 10, background: CORES[i%CORES.length], flexShrink: 0, borderRadius: 2 }}/>
                         <span style={{ color: "var(--text-secondary)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.nome}</span>
-                        <span style={{ fontWeight: 700, flexShrink: 0, color: "var(--text)" }}>{a.minutos} min</span>
+                        <span style={{ fontWeight: 700, flexShrink: 0, color: "var(--text)" }}>{formatMin(a.minutos)}</span>
                       </div>
                     ))}
                   </div>
@@ -352,13 +352,13 @@ export default function GestorPage() {
               {/* Barra horizontal */}
               {atividades.length > 0 && (
                 <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 20, boxShadow: "var(--shadow-md)" }}>
-                  <p className="roto-label" style={{ marginBottom: 16 }}>Minutos por atividade</p>
+                  <p className="roto-label" style={{ marginBottom: 16 }}>Horas por atividade</p>
                   <div style={{ width: "100%", height: Math.max(220, atividades.length * 44) }}>
                     <ResponsiveContainer>
                       <BarChart data={atividades} layout="vertical" margin={{left:0,right:20}}>
-                        <XAxis type="number" tick={{fill:"var(--muted)",fontSize:12}}/>
+                        <XAxis type="number" tickFormatter={(v) => formatMin(v)} tick={{fill:"var(--muted)",fontSize:12}}/>
                         <YAxis type="category" dataKey="nome" width={130} tick={{fill:"var(--text-secondary)",fontSize:12}}/>
-                        <Tooltip formatter={(v) => [`${v} min`,"Tempo"]} contentStyle={TT}/>
+                        <Tooltip formatter={(v) => [formatMin(Number(v)),"Tempo"]} contentStyle={TT}/>
                         <Bar dataKey="minutos" fill="var(--primary)" radius={[0,6,6,0]}/>
                       </BarChart>
                     </ResponsiveContainer>
@@ -374,8 +374,8 @@ export default function GestorPage() {
                     <LineChart data={tendencia}>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)"/>
                       <XAxis dataKey="dia" tick={{fill:"var(--muted)",fontSize:12}}/>
-                      <YAxis tick={{fill:"var(--muted)",fontSize:12}}/>
-                      <Tooltip formatter={(v) => [`${v} min`]} contentStyle={TT}/>
+                      <YAxis tickFormatter={(v) => formatMin(v)} tick={{fill:"var(--muted)",fontSize:12}}/>
+                      <Tooltip formatter={(v) => [formatMin(Number(v))]} contentStyle={TT}/>
                       <Legend wrapperStyle={{fontSize:13,fontFamily:"'Inter',sans-serif"}}/>
                       <Line type="monotone" dataKey="capacidade" stroke="var(--border-hi)" strokeDasharray="4 4" name="Capacidade/dia" dot={false}/>
                       <Line type="monotone" dataKey="minutos" stroke="var(--primary)" strokeWidth={2.5} name="Invisível" dot={{fill:"var(--primary)",r:4}}/>
@@ -393,8 +393,8 @@ export default function GestorPage() {
                       <LineChart data={evolucao}>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)"/>
                         <XAxis dataKey="dia" tick={{fill:"var(--muted)",fontSize:12}}/>
-                        <YAxis tick={{fill:"var(--muted)",fontSize:12}}/>
-                        <Tooltip formatter={(v) => [`${v} min`]} contentStyle={TT}/>
+                        <YAxis tickFormatter={(v) => formatMin(v)} tick={{fill:"var(--muted)",fontSize:12}}/>
+                        <Tooltip formatter={(v) => [formatMin(Number(v))]} contentStyle={TT}/>
                         <Legend wrapperStyle={{fontSize:12,fontFamily:"'Inter',sans-serif"}}
                           formatter={(v)=>v.length>16?v.slice(0,16)+"…":v}/>
                         {ativsUnicas.map((nome,i) => (

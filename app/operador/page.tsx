@@ -354,14 +354,18 @@ export default function OperadorPage() {
 
   function iniciarEdicao(item: any) {
     setEditandoId(item.id);
-    setEditMinutos(String(item.duration_minutes));
+    const h = Math.floor(item.duration_minutes / 60);
+    const m = item.duration_minutes % 60;
+    setEditMinutos(`${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`);
   }
 
   async function salvarEdicao() {
-    if (!editMinutos || Number(editMinutos) < 1) { alert("Informe um tempo válido."); return; }
+    const [hStr, mStr] = editMinutos.split(":");
+    const totalMinutos = (parseInt(hStr) || 0) * 60 + (parseInt(mStr) || 0);
+    if (!totalMinutos || totalMinutos < 1) { alert("Informe um tempo válido."); return; }
     try {
       const { error } = await supabase.from("activity_logs").update({
-        duration_minutes: Number(editMinutos),
+        duration_minutes: totalMinutos,
         manual_adjusted: true,
         observacao: `Editado pelo operador. Tempo anterior alterado.`,
       }).eq("id", editandoId);
@@ -750,13 +754,12 @@ export default function OperadorPage() {
                         {/* Edição / Ações */}
                         {editandoId === item.id ? (
                           <div style={{ marginTop: 12, padding: 12, background: "var(--bg-raised)", borderRadius: 6, border: "1px solid var(--border-hi)" }}>
-                            <p className="roto-label" style={{ marginBottom: 8 }}>Editar Minutos</p>
-                            <div style={{ display: "flex", gap: 8 }}>
+                            <p className="roto-label" style={{ marginBottom: 8 }}>Editar Tempo</p>
+                            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                               <input 
-                                type="number" 
-                                min="1"
+                                type="time" 
                                 className="roto-input" 
-                                style={{ padding: "8px 12px" }}
+                                style={{ padding: "8px 12px", flex: 1 }}
                                 value={editMinutos}
                                 onChange={e => setEditMinutos(e.target.value)}
                               />

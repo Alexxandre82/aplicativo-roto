@@ -642,9 +642,9 @@ export default function OperadorPage() {
                   marginBottom: 16,
                 }}>
                   <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 72, fontWeight: 900, color: "var(--primary)", margin: 0, lineHeight: 1 }}>
-                    {minutosCalculados}
+                    {formatarMinutosExibicao(minutosCalculados)}
                   </p>
-                  <p style={{ color: "var(--muted)", fontSize: 13, marginTop: 4 }}>minutos registrados</p>
+                  <p style={{ color: "var(--muted)", fontSize: 13, marginTop: 4 }}>tempo registrado</p>
                 </div>
 
                 {/* Checkbox ajuste */}

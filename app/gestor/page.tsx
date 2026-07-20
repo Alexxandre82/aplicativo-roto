@@ -11,7 +11,6 @@ import {
 
 type Periodo = "dia" | "semana" | "mes";
 
-// Nova paleta azul/teal/laranja alinhada ao redesign
 const CORES = ["#0077B6","#0096C7","#00B4D8","#F77F00","#F4A261","#CC0000","#48CAE4","#ADE8F4"];
 
 const TT = {
@@ -68,21 +67,15 @@ function PizzaLabel({cx,cy,midAngle,innerRadius,outerRadius,percent}: any) {
   </text>;
 }
 
-// ── KPI Card ──────────────────────────────────────────────────────────────────
 function KpiCard({ label, value, sub, color, icon }: {
   label: string; value: string; sub?: string; color: string; icon: string;
 }) {
   return (
     <div style={{
-      background: "#fff",
-      border: "1px solid var(--border)",
-      borderTop: `3px solid ${color}`,
-      borderRadius: "var(--radius-md)",
-      padding: "18px 20px",
-      boxShadow: "var(--shadow-md)",
-      display: "flex",
-      flexDirection: "column",
-      gap: 4,
+      background: "#fff", border: "1px solid var(--border)",
+      borderTop: `3px solid ${color}`, borderRadius: "var(--radius-md)",
+      padding: "18px 20px", boxShadow: "var(--shadow-md)",
+      display: "flex", flexDirection: "column", gap: 4,
       transition: "box-shadow 0.2s, transform 0.2s",
     }}
     onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "var(--shadow-lg)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(-2px)"; }}
@@ -95,10 +88,7 @@ function KpiCard({ label, value, sub, color, icon }: {
       <p style={{
         fontFamily: "'Barlow Condensed', sans-serif",
         fontSize: "clamp(28px, 4vw, 40px)",
-        fontWeight: 900,
-        color,
-        margin: 0,
-        lineHeight: 1,
+        fontWeight: 900, color, margin: 0, lineHeight: 1,
       }}>{value}</p>
       {sub && <p className="roto-muted" style={{ marginTop: 4 }}>{sub}</p>}
     </div>
@@ -124,22 +114,13 @@ export default function GestorPage() {
     if (!u) { router.replace("/login"); return; }
     const p = JSON.parse(u);
     if (p.perfil !== "gestor" && p.perfil !== "admin") { router.replace("/operador"); return; }
-    
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        localStorage.removeItem("user");
-        router.replace("/login");
-        return;
+    supabase.from("profiles").select("perfil,ativo").eq("id",p.id).maybeSingle().then(({data})=>{
+      if (!data||!data.ativo||(data.perfil!=="gestor"&&data.perfil!=="admin")) {
+        localStorage.removeItem("user"); router.replace("/login");
       }
-      
-      supabase.from("profiles").select("perfil,ativo").eq("id",p.id).maybeSingle().then(({data})=>{
-        if (!data||!data.ativo||(data.perfil!=="gestor"&&data.perfil!=="admin")) {
-          localStorage.removeItem("user"); router.replace("/login");
-        }
-      });
-      loadDados(periodo, dataFiltro);
     });
-  }, [router, periodo, dataFiltro]);
+    loadDados(periodo, dataFiltro);
+  }, [router]);
 
   async function loadDados(p: Periodo, data: string) {
     setLoading(true);
@@ -178,14 +159,21 @@ export default function GestorPage() {
     setLoading(false);
   }
 
-  function mudarPeriodo(p: Periodo) { setPeriodo(p); loadDados(p,dataFiltro); }
-  function mudarData(d: string) { setDataFiltro(d); loadDados(periodo,d); }
+  function mudarPeriodo(p: Periodo) { setPeriodo(p); loadDados(p, dataFiltro); }
+  function mudarData(d: string) { setDataFiltro(d); loadDados(periodo, d); }
 
   const pct = capacidade>0 ? Math.round((totalMin/capacidade)*100) : 0;
   const top = atividades[0];
   const pctTop = totalMin>0&&top ? Math.round((top.minutos/totalMin)*100) : 0;
-
   const pctColor = pct>30 ? "var(--roto-red)" : pct>15 ? "var(--warning)" : "var(--success)";
+
+  // Gera lista de meses para o select (últimos 24)
+  const opcoesMes = Array.from({length:24},(_,i)=>{
+    const d = new Date(); d.setDate(1); d.setMonth(d.getMonth()-i);
+    const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+    const label = d.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+    return { val, label: label.charAt(0).toUpperCase()+label.slice(1) };
+  });
 
   return (
     <div className="roto-page">
@@ -193,15 +181,11 @@ export default function GestorPage() {
       {/* ── Header ── */}
       <header className="roto-header">
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <img
-            src="/logo.png"
-            alt="Roto Fermax"
-            className="roto-header-logo"
-          />
+          <img src="/logo.png" alt="Roto Fermax" className="roto-header-logo" />
           <span className="roto-header-title">Gestão</span>
         </div>
         <button
-          onClick={async () => { await supabase.auth.signOut(); localStorage.removeItem("user"); router.replace("/login"); }}
+          onClick={() => { localStorage.removeItem("user"); router.replace("/login"); }}
           className="roto-button-secondary"
           style={{ padding: "6px 14px", fontSize: 12, borderColor: "rgba(255,255,255,0.4)", color: "#fff", background: "rgba(255,255,255,0.15)" }}
         >
@@ -225,33 +209,40 @@ export default function GestorPage() {
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
             <div style={{ display: "flex", background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", overflow: "hidden" }}>
               {(["dia","semana","mes"] as Periodo[]).map(p => (
-                <button
-                  key={p}
-                  onClick={() => mudarPeriodo(p)}
-                  style={{
-                    padding: "9px 18px",
-                    border: "none",
-                    background: periodo === p ? "var(--primary)" : "transparent",
-                    color: periodo === p ? "#fff" : "var(--text-secondary)",
-                    fontFamily: "'Inter', sans-serif",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    letterSpacing: "0.04em",
-                    transition: "background 0.15s, color 0.15s",
-                  }}
-                >
+                <button key={p} onClick={() => mudarPeriodo(p)} style={{
+                  padding: "9px 18px", border: "none",
+                  background: periodo === p ? "var(--primary)" : "transparent",
+                  color: periodo === p ? "#fff" : "var(--text-secondary)",
+                  fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 600,
+                  cursor: "pointer", letterSpacing: "0.04em",
+                  transition: "background 0.15s, color 0.15s",
+                }}>
                   {p === "dia" ? "Dia" : p === "semana" ? "Semana" : "Mês"}
                 </button>
               ))}
             </div>
-            <input
-              type="date"
-              value={dataFiltro}
-              onChange={e => mudarData(e.target.value)}
-              className="roto-input"
-              style={{ maxWidth: 180, margin: 0 }}
-            />
+
+            {/* Seletor dinâmico por período */}
+            {periodo === "mes" ? (
+              <select
+                value={dataFiltro.slice(0,7)}
+                onChange={e => mudarData(e.target.value + "-01")}
+                className="roto-input"
+                style={{ maxWidth: 220, margin: 0, fontSize: 14, padding: "9px 14px" }}
+              >
+                {opcoesMes.map(o => (
+                  <option key={o.val} value={o.val}>{o.label}</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="date"
+                value={dataFiltro}
+                onChange={e => mudarData(e.target.value)}
+                className="roto-input"
+                style={{ maxWidth: 180, margin: 0 }}
+              />
+            )}
           </div>
         </div>
 
@@ -269,51 +260,29 @@ export default function GestorPage() {
           <>
             {/* ── KPIs ── */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 24 }}>
-              <KpiCard
-                icon="👥"
-                label="Mão de obra disponível"
-                value={formatMin(capacidade)}
-                sub={diasAtivos > 1 ? `${diasAtivos} dias` : undefined}
-                color="var(--primary)"
-              />
-              <KpiCard
-                icon="⏱"
-                label="Tempo invisível"
-                value={formatMin(totalMin)}
-                color="var(--roto-red)"
-              />
-              <KpiCard
-                icon="📊"
-                label="% do tempo em invisível"
-                value={`${pct}%`}
+              <KpiCard icon="👥" label="Mão de obra disponível" value={formatMin(capacidade)}
+                sub={diasAtivos > 1 ? `${diasAtivos} dias` : undefined} color="var(--primary)" />
+              <KpiCard icon="⏱" label="Tempo invisível" value={formatMin(totalMin)} color="var(--roto-red)" />
+              <KpiCard icon="📊" label="% do tempo em invisível" value={`${pct}%`}
                 sub={pct > 30 ? "⚠ Atenção: acima do esperado" : pct > 15 ? "Moderado" : "Dentro do esperado"}
-                color={pctColor}
-              />
+                color={pctColor} />
             </div>
 
-            {/* Barra de progresso */}
+            {/* Barra progresso */}
             <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "16px 20px", marginBottom: 24, boxShadow: "var(--shadow-md)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <span className="roto-label">Ocupação do tempo disponível</span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: pctColor }}>{pct}%</span>
               </div>
               <div style={{ height: 8, background: "var(--bg)", borderRadius: 4, overflow: "hidden" }}>
-                <div style={{
-                  height: "100%",
-                  width: `${Math.min(pct, 100)}%`,
-                  background: pctColor,
-                  borderRadius: 4,
-                  transition: "width 0.6s ease",
-                }} />
+                <div style={{ height: "100%", width: `${Math.min(pct,100)}%`, background: pctColor, borderRadius: 4, transition: "width 0.6s ease" }} />
               </div>
             </div>
 
-            {/* Alerta gargalo */}
+            {/* Alerta */}
             {top && pctTop >= 40 && (
               <div className="roto-card-red" style={{ marginBottom: 24 }}>
-                <p style={{ color: "var(--roto-red)", fontWeight: 700, fontSize: 14, marginBottom: 4 }}>
-                  ⚠ Gargalo detectado
-                </p>
+                <p style={{ color: "var(--roto-red)", fontWeight: 700, fontSize: 14, marginBottom: 4 }}>⚠ Gargalo detectado</p>
                 <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
                   <strong>{top.nome}</strong> representa <strong>{pctTop}%</strong> do tempo invisível no período.
                 </p>
@@ -323,7 +292,6 @@ export default function GestorPage() {
             {/* ── Gráficos ── */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 20, marginBottom: 24 }}>
 
-              {/* Pizza */}
               {atividades.length > 0 && (
                 <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 20, boxShadow: "var(--shadow-md)" }}>
                   <p className="roto-label" style={{ marginBottom: 16 }}>Proporção por atividade</p>
@@ -349,7 +317,6 @@ export default function GestorPage() {
                 </div>
               )}
 
-              {/* Barra horizontal */}
               {atividades.length > 0 && (
                 <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 20, boxShadow: "var(--shadow-md)" }}>
                   <p className="roto-label" style={{ marginBottom: 16 }}>Horas por atividade</p>
@@ -366,7 +333,6 @@ export default function GestorPage() {
                 </div>
               )}
 
-              {/* Tendência total */}
               <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 20, boxShadow: "var(--shadow-md)" }}>
                 <p className="roto-label" style={{ marginBottom: 16 }}>Tendência total — 7 dias</p>
                 <div style={{ width: "100%", height: 240 }}>
@@ -384,7 +350,6 @@ export default function GestorPage() {
                 </div>
               </div>
 
-              {/* Evolução por atividade */}
               {ativsUnicas.length > 0 && (
                 <div style={{ background: "#fff", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 20, boxShadow: "var(--shadow-md)" }}>
                   <p className="roto-label" style={{ marginBottom: 16 }}>Evolução por atividade — 7 dias</p>
@@ -409,7 +374,6 @@ export default function GestorPage() {
               )}
             </div>
 
-            {/* Sem dados */}
             {atividades.length === 0 && (
               <div style={{ textAlign: "center", padding: "48px 24px", background: "#fff", borderRadius: "var(--radius-md)", border: "1px solid var(--border)" }}>
                 <p style={{ fontSize: 36, marginBottom: 12 }}>📋</p>
@@ -417,25 +381,15 @@ export default function GestorPage() {
               </div>
             )}
 
-            {/* Exportar */}
             {logs.length > 0 && (
               <button
                 onClick={() => exportarCSV(logs, `roto-invisivel-${periodo}-${dataFiltro}.csv`)}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "13px 20px",
-                  background: "#fff",
-                  border: "1.5px solid var(--primary)",
-                  borderRadius: "var(--radius-sm)",
-                  color: "var(--primary)",
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "background 0.15s",
-                  marginTop: 8,
+                  display: "flex", alignItems: "center", gap: 8,
+                  padding: "13px 20px", background: "#fff",
+                  border: "1.5px solid var(--primary)", borderRadius: "var(--radius-sm)",
+                  color: "var(--primary)", fontFamily: "'Inter', sans-serif",
+                  fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "background 0.15s", marginTop: 8,
                 }}
                 onMouseEnter={e => (e.currentTarget.style.background = "var(--primary-light)")}
                 onMouseLeave={e => (e.currentTarget.style.background = "#fff")}
